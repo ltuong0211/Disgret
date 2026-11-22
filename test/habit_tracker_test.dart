@@ -1,7 +1,9 @@
 // 4.1, 4.2 Kiểm thử giao diện Habit tracker: màn tạo/sửa thói quen, chọn icon, xoá; tab Thói quen
-// (Hôm nay: chạm, vuốt, giữ lâu, lọc theo buổi; Tuần; Tổng thể); màn chi tiết; nhắc ở Trang chủ.
+// (Theo ngày: chạm, vuốt, giữ lâu, lọc theo buổi; Tuần; Tổng thể); màn chi tiết; nhắc trên thẻ
+// thói quen đã cất (HabitCard, ADR-0004).
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:focus_app/data/habit_science.dart';
 import 'package:focus_app/data/mock_data.dart';
 import 'package:focus_app/data/models/goal.dart';
 import 'package:focus_app/data/models/habit.dart';
@@ -13,6 +15,8 @@ import 'package:focus_app/data/repositories/habit_log_repository.dart';
 import 'package:focus_app/data/repositories/habit_repository.dart';
 import 'package:focus_app/data/repositories/profile_repository.dart';
 import 'package:focus_app/widgets/habit_card.dart';
+import 'package:focus_app/widgets/habit_heat_map.dart';
+import 'package:focus_app/widgets/habit_journey.dart';
 import 'package:focus_app/widgets/habit_today_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
@@ -331,7 +335,9 @@ void main() {
       expect(find.text('Đã xong (1)'), findsOneWidget);
     });
 
-    testWidgets('Giữ lâu → "Bắt đầu Focus" mở Focus với đúng thói quen đó', (tester) async {
+    testWidgets('Giữ lâu → "Bắt đầu Focus" qua bước động lực rồi học đúng thói quen đó', (
+      tester,
+    ) async {
       await seed();
       await HabitRepository().save(
         const Habit(id: 'h2', goalId: 'g1', name: 'Đọc sách', minMinutesPerDay: 10),
@@ -343,11 +349,13 @@ void main() {
       await tester.pumpAndSettle();
       await _tap(tester, find.text('Bắt đầu Focus'));
 
-      expect(find.text('Chỉ cần cam kết 5 phút đầu'), findsOneWidget);
-      final dropdown = tester.widget<DropdownButtonFormField<String>>(
-        find.byType(DropdownButtonFormField<String>),
-      );
-      expect(dropdown.initialValue, 'h2');
+      // Một lối vào duy nhất: bước động lực toàn màn hình, số phút theo thói quen đã chọn.
+      expect(find.byType(NavigationBar), findsNothing);
+      expect(find.text('Bắt đầu 10 phút'), findsOneWidget);
+
+      await _tap(tester, find.text('Bỏ qua'));
+      expect(find.text('Đọc sách'), findsOneWidget);
+      expect(find.text('10:00'), findsOneWidget);
     });
 
     testWidgets('Có phút Focus mà chưa đủ: thẻ hiện số phút và vạch tiến độ mỏng', (tester) async {
@@ -426,28 +434,29 @@ void main() {
   });
 
   group('Với dữ liệu mẫu', () {
-    testWidgets('Trang chủ: hôm qua bỏ thì nhắc "Đừng bỏ 2 lần liên tiếp", bấm là làm bản 2 phút', (
-      tester,
-    ) async {
-      await _seedSampleData();
-      await _pump(tester);
+    testWidgets(
+      'Thẻ đã cất: hôm qua bỏ thì nhắc "Đừng bỏ 2 lần liên tiếp", bấm là làm bản 2 phút',
+      (tester) async {
+        await _seedSampleData();
+        await pumpHabitCard(tester, MockData.readingHabit, clock: () => _now);
 
-      const nudge = 'Đừng bỏ 2 lần liên tiếp – làm bản 2 phút nhé';
-      await tester.scrollUntilVisible(find.text(nudge), 200);
-      expect(
-        find.descendant(
-          of: find.widgetWithText(HabitCard, 'Đọc sách 10 trang'),
-          matching: find.text(nudge),
-        ),
-        findsOne,
-      );
+        const nudge = 'Đừng bỏ 2 lần liên tiếp – làm bản 2 phút nhé';
+        await tester.scrollUntilVisible(find.text(nudge), 200);
+        expect(
+          find.descendant(
+            of: find.widgetWithText(HabitCard, 'Đọc sách 10 trang'),
+            matching: find.text(nudge),
+          ),
+          findsOne,
+        );
 
-      await _tap(tester, find.text(nudge));
-      final log = HabitLogRepository().getAll().where(
-        (log) => log.habitId == MockData.readingHabit.id && log.date == DateTime(2026, 3, 5),
-      );
-      expect(log.single.source, HabitLogSource.minimal);
-    });
+        await _tap(tester, find.text(nudge));
+        final log = HabitLogRepository().getAll().where(
+          (log) => log.habitId == MockData.readingHabit.id && log.date == DateTime(2026, 3, 5),
+        );
+        expect(log.single.source, HabitLogSource.minimal);
+      },
+    );
 
     testWidgets('Tuần: 7 ô T2–CN, chạm để đổi xong → bỏ qua → chưa làm; ngày tới thì khoá', (
       tester,
@@ -510,9 +519,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('Màn chi tiết: số liệu, biểu đồ sức mạnh, hành trình, lịch 16 tuần, ghi chú', (
-      tester,
-    ) async {
+    testWidgets('Màn chi tiết: số liệu, lịch tháng, biểu đồ sức mạnh, ghi chú', (tester) async {
       await _seedSampleData();
       await _pump(tester);
       await _openHabitsTab(tester);
@@ -536,22 +543,43 @@ void main() {
       await tester.scrollUntilVisible(find.byType(LineChart), 200, scrollable: _pageScroll);
       expect(find.byType(LineChart), findsOneWidget);
 
-      // Đủ 66 ngày nên có đủ 4 huy hiệu.
-      await tester.scrollUntilVisible(
-        find.text('66/66 ngày hoàn thành'),
-        200,
-        scrollable: _pageScroll,
-      );
-      await tester.scrollUntilVisible(find.text('Thành thói quen'), 100, scrollable: _pageScroll);
-      expect(find.bySemanticsLabel('Huy hiệu Thành thói quen, 66 ngày, đã đạt'), findsOneWidget);
-
       await tester.scrollUntilVisible(
         find.text('Ôn xong chương 4, mai làm đề.'),
         200,
         scrollable: _pageScroll,
       );
-      expect(find.bySemanticsLabel(RegExp(r'^Lịch 16 tuần: hoàn thành')), findsOneWidget);
       expect(find.text('Mệt nên chỉ đọc lại ghi chú.'), findsOneWidget);
+      // Parked (ADR-0004, spec 001 FR-014): no 66-day journey and no 16-week heat map.
+      expect(find.textContaining('Hành trình'), findsNothing);
+      expect(find.text('Lịch 16 tuần'), findsNothing);
+      expect(find.byType(HabitJourney), findsNothing);
+      expect(find.byType(HabitHeatCalendar), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Đã cất: hành trình 66 ngày và lịch 16 tuần vẫn dựng được khi gọi trực tiếp', (
+      tester,
+    ) async {
+      await _seedSampleData();
+      final habit = HabitRepository().getById('demo_habit_review')!;
+      final history = HabitHistory.of(habit, HabitLogRepository().getAll());
+      await pumpStandalone(
+        tester,
+        Scaffold(
+          body: ListView(
+            children: [
+              HabitJourney(days: HabitScience.journeyDays(history)),
+              HabitHeatCalendar(history: history, today: DateTime(2026, 3, 5)),
+            ],
+          ),
+        ),
+        size: const Size(412, 915),
+      );
+
+      // Đủ 66 ngày nên có đủ 4 huy hiệu.
+      expect(find.text('66/66 ngày hoàn thành'), findsOneWidget);
+      expect(find.bySemanticsLabel('Huy hiệu Thành thói quen, 66 ngày, đã đạt'), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp(r'^Lịch 16 tuần: hoàn thành')), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
@@ -584,7 +612,7 @@ void main() {
       await _openHabitsTab(tester);
       expect(tester.takeException(), isNull);
 
-      for (final view in ['Tuần', 'Tổng thể', 'Hôm nay']) {
+      for (final view in ['Tuần', 'Tổng thể', 'Theo ngày']) {
         await _tap(tester, find.text(view));
         expect(tester.takeException(), isNull, reason: view);
       }
