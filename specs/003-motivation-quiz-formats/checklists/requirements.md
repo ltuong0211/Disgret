@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,6 +31,5 @@
 
 ## Notes
 
-- One open marker (FR-010): whether new reels are added for formats the bundled catalogue lacks.
-  Resolve before `/speckit-plan` (answer from the project lead, or `/speckit-clarify`).
+- FR-010 resolved on 2026-11-23: new reels are added for every offered format (FR-010, FR-011).
 - "Shared UI strings file" (FR-009) names a project rule (ADR-0005), not a technology.

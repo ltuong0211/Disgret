@@ -12,6 +12,13 @@ vào người dùng, có thể set up bộ câu hỏi như kiểu: 'dạng video
 
 **Depends on**: feature 002 (bounded motivation dose, recommender without likes).
 
+## Clarifications
+
+### Session 2026-11-23
+
+- Q: Add new reels for formats the 6 bundled videos do not cover, or offer only existing formats?
+  → A: Add new reels so every offered format has eligible reels (FR-010, FR-011).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - The first reel already fits me (Priority: P1)
@@ -131,11 +138,13 @@ Phiên học and confirm each format shows its own count and start share.
   the share followed by a session start; it MUST NOT add any social or engagement count.
 - **FR-009**: All quiz text MUST be Vietnamese and come from the shared UI strings file
   (ADR-0005); no answer MUST collect names, school, age or anything identifying the student.
-- **FR-010**: The catalogue MUST offer at least one eligible reel for each format the quiz
-  proposes before a session, so that every answer can actually change the playlist.
-  [NEEDS CLARIFICATION: Does this feature include adding new reels for formats the 6 bundled
-  videos do not cover (with the licensing risk of ADR-0007), or should the quiz only offer the
-  formats the current catalogue already has?]
+- **FR-010**: The bundled catalogue MUST be extended with new reels so that each of the four
+  formats offered by the quiz has at least one reel eligible before a session (target: two), so
+  every answer can actually change the playlist. Each new reel MUST carry the same catalogue data
+  as today (title, motivation tags, length, contexts, source credit) plus its format.
+- **FR-011**: New videos MUST be short (15–60 seconds), bundled with the app (no streaming,
+  Constitution II), and their sources recorded; their licensing risk MUST be recorded by updating
+  ADR-0007 before they are added.
 
 ### Key Entities
 
@@ -160,6 +169,8 @@ Phiên học and confirm each format shows its own count and start share.
   motivation reasons.
 - **SC-004**: After one week of use, the share of reels followed by a session start can be read
   per format from on-device data alone.
+- **SC-006**: Every format offered by the quiz has at least one reel eligible before a session in
+  the shipped catalogue (checked automatically).
 - **SC-005**: In the hallway test, at least 4 of 5 students say the profile summary in Cài đặt
   "describes me" (yes/no question).
 
@@ -170,5 +181,8 @@ Phiên học and confirm each format shows its own count and start share.
 - The format bonus is half of a motivation-tag match (exact value set in the plan).
 - Tone of voice (gentle vs tough) and reel length preference are out of scope; reel length stays
   as asked today.
-- The team, not the user, assigns the format of each bundled reel.
+- The team, not the user, assigns the format of each bundled reel and sources the new videos;
+  implementation of FR-010 waits for those files.
+- The catalogue grows from 6 to about 10–14 reels; the app size grows by roughly 2 MB per reel,
+  which is acceptable for a course project APK.
 - Retaking the quiz does not reset watch history; the recently-watched penalty keeps working.
