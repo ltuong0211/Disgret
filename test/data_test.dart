@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:focus_app/data/hive_boxes.dart';
 import 'package:focus_app/data/models/event.dart';
 import 'package:focus_app/data/models/goal.dart';
 import 'package:focus_app/data/models/habit.dart';
@@ -242,6 +243,106 @@ void main() {
         'completed': true,
         'startedFocus': true,
       });
+    });
+  });
+
+  group('Sự kiện của bước động lực (spec 002)', () {
+    test('logReelWatched với cùng id thay bản ghi cũ, không thêm bản ghi thứ hai', () async {
+      final repository = EventRepository();
+      final id = await repository.logReelWatched(reelId: 'r1', secondsWatched: 4, completed: false);
+      await repository.logReelWatched(
+        reelId: 'r1',
+        secondsWatched: 9,
+        completed: true,
+        startedFocus: true,
+        id: id,
+      );
+
+      final event = repository.getAll().single;
+      expect(event.id, id);
+      expect(event.meta, {
+        'reelId': 'r1',
+        'secondsWatched': 9,
+        'completed': true,
+        'startedFocus': true,
+      });
+    });
+
+    test('motivation_skipped lưu ngữ cảnh và vị trí reel', () async {
+      final repository = EventRepository();
+      await repository.logMotivationSkipped(context: ReelContext.start, position: 2);
+
+      final event = repository.getAll().single;
+      expect(event.type, EventType.motivationSkipped);
+      expect(event.toMap()['type'], 'motivation_skipped');
+      expect(event.meta, {'context': 'start', 'position': 2});
+    });
+
+    test('Sự kiện thích, bình luận, chia sẻ của bản cũ vẫn đọc được', () async {
+      final box = Hive.box<dynamic>(HiveBoxes.events);
+      for (final type in ['reel_liked', 'reel_unliked', 'reel_commented', 'reel_shared']) {
+        await box.put(type, {
+          'id': type,
+          'type': type,
+          'time': '2026-11-01T10:00:00.000',
+          'meta': {'reelId': 'r1'},
+        });
+      }
+
+      final types = EventRepository().getAll().map((event) => event.type);
+      expect(
+        types,
+        unorderedEquals([
+          EventType.reelLiked,
+          EventType.reelUnliked,
+          EventType.reelCommented,
+          EventType.reelShared,
+        ]),
+      );
+    });
+  });
+
+  group('Retired social boxes (spec 002 FR-009, SC-006)', () {
+    test('Retired names are not opened and never reused', () {
+      expect(HiveBoxes.retired, ['reel_reactions', 'reel_comments']);
+      expect(HiveBoxes.all.toSet().intersection(HiveBoxes.retired.toSet()), isEmpty);
+    });
+
+    testWidgets('The app starts normally on a device with old likes and comments', (tester) async {
+      final reactions = await Hive.openBox<dynamic>('reel_reactions', bytes: Uint8List(0));
+      await reactions.put('r1', {'reelId': 'r1', 'liked': true});
+      final comments = await Hive.openBox<dynamic>('reel_comments', bytes: Uint8List(0));
+      await comments.put('c1', {'id': 'c1', 'reelId': 'r1', 'text': 'Hay quá'});
+      await ProfileRepository().completeOnboarding(
+        const UserProfile(motivationTypes: [MotivationType.career], preferredReelLength: 30),
+      );
+      await GoalRepository().save(const Goal(id: 'g1', title: 'Qua môn Toán', reason: 'Lý do'));
+      await HabitRepository().save(
+        const Habit(id: 'h1', goalId: 'g1', name: 'Ôn bài', minMinutesPerDay: 25),
+      );
+
+      await pumpApp(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('Qua môn Toán'), findsOneWidget, reason: 'Non-social data intact');
+      expect(find.text('Ôn bài'), findsOneWidget);
+      expect(reactions.length, 1, reason: 'Old social data is left untouched');
+      expect(comments.length, 1);
+    });
+
+    test('"Xoá toàn bộ dữ liệu" also deletes retired boxes from disk', () async {
+      final dir = await Directory.systemTemp.createTemp('disgret_hive');
+      addTearDown(() => dir.delete(recursive: true));
+      Hive.init(dir.path);
+      final old = await Hive.openBox<dynamic>('reel_reactions');
+      await old.put('r1', {'reelId': 'r1', 'liked': true});
+      await old.close();
+      final file = File('${dir.path}/reel_reactions.hive');
+      expect(file.existsSync(), isTrue);
+
+      await HiveBoxes.clearUserData();
+
+      expect(file.existsSync(), isFalse);
     });
   });
 

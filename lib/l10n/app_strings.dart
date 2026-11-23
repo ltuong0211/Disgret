@@ -47,6 +47,16 @@ class AppStrings {
   static const String smallStep = 'Chỉ 5 phút thôi';
   static const String skip = 'Bỏ qua';
   static const String backToStudy = 'Quay lại học';
+  static const String nextReel = 'Tiếp';
+
+  /// Position of the current reel in the playlist, e.g. "1/3".
+  static String reelPosition(int current, int total) => '$current/$total';
+  static String reelPositionLabel(int current, int total) => 'Reel $current trên $total';
+  static const String endCardStartTitle = 'Giờ đến lượt bạn';
+  static const String endCardBackTitle = 'Quay lại phiên học nhé';
+  static const String reelsLoadError = 'Không tải được danh sách reel.';
+  static const String reelPlayError = 'Không phát được video này.';
+  static const String noMatchingReel = 'Chưa có reel phù hợp.';
 
   // ---------- Running session ----------
   static const String focusTitle = 'Phiên học';
@@ -58,6 +68,7 @@ class AppStrings {
   static const String progressHabits = 'Thói quen';
   static const String progressSessions = 'Phiên học';
   static const String progressEmpty = 'Tiến độ sẽ hiện ở đây sau phiên học đầu tiên.';
+  static const String reelsFollowedByStart = 'Bắt đầu học ngay sau khi xem';
 
   // ---------- Thói quen ----------
   static const String habitsByDay = 'Theo ngày';
