@@ -163,16 +163,17 @@ Phiên học and confirm each format shows its own count and start share.
 - **SC-001**: A first-time user finishes onboarding, quiz included, in 75 seconds or less in a
   hallway test with 5 students (median).
 - **SC-002**: For a profile with a preferred format, the first reel of the before-session playlist
-  matches that format in 100% of openings where at least one eligible reel of that format exists
-  and no pinned reel applies.
+  matches that format in 100% of openings where an eligible reel of that format matches at least
+  as many of the user's motivation reasons as any other eligible reel and no pinned reel applies
+  (reason stays the primary signal, FR-005).
 - **SC-003**: 100% of profiles saved by the previous version load without error and keep their
   motivation reasons.
 - **SC-004**: After one week of use, the share of reels followed by a session start can be read
   per format from on-device data alone.
-- **SC-006**: Every format offered by the quiz has at least one reel eligible before a session in
-  the shipped catalogue (checked automatically).
 - **SC-005**: In the hallway test, at least 4 of 5 students say the profile summary in Cài đặt
   "describes me" (yes/no question).
+- **SC-006**: Every format offered by the quiz has at least one reel eligible before a session in
+  the shipped catalogue (checked automatically).
 
 ## Assumptions
 
