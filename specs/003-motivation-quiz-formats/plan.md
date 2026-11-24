@@ -52,7 +52,7 @@ grows ~2 MB per new reel
 | IV. Layered Simplicity | Scoring and derivation are pure functions (`motivation_quiz.dart`, `reel_recommender.dart`, `focus_stats.dart`); screens only render; no new package | Pass |
 | V. Verified Changes | Unit + widget tests listed in quickstart; catalogue test enforces SC-006 | Pass (to verify) |
 | VI. Traceability | ADR-0007 updated for new videos before they are added; README demo + data-model doc updated | Pass with note R5 |
-| VII. Agent Collaboration | Shared files: `user_profile.dart`, `reel.dart`, `reel_recommender.dart`, `focus_stats.dart`, `app_providers.dart`, `profile_repository.dart`; dependents in research R6 | Pass |
+| VII. Agent Collaboration | Shared files: `user_profile.dart`, `reel.dart`, `reel_recommender.dart`, `focus_stats.dart`, `app_providers.dart`; dependents in research R6 | Pass |
 
 Post-design re-check: unchanged.
 
@@ -80,8 +80,7 @@ lib/
 ├── data/models/user_profile.dart        # + preferredFormats (default const [])
 ├── data/models/reel.dart                # + format (default VideoFormat.other)
 ├── data/motivation_quiz.dart            # 6 reason questions; 2 format questions; preferredFormatsFrom()
-├── data/repositories/profile_repository.dart  # updateMotivationProfile(types, formats)
-├── providers/app_providers.dart         # ProfileNotifier.updateMotivationProfile; focusStatsProvider passes reel formats
+├── providers/app_providers.dart         # ProfileNotifier.updateMotivationProfile(types, formats) replaces updateMotivationTypes; focusStatsProvider passes reel formats
 ├── services/reel_recommender.dart       # + format bonus (+1), profile formats
 ├── services/focus_stats.dart            # + per-format shown / started counts
 ├── screens/onboarding_screen.dart       # 8 quiz steps, format steps
