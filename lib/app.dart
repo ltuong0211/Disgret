@@ -7,11 +7,14 @@ import 'package:material_ui/material_ui.dart';
 
 import 'data/models/reel.dart';
 import 'providers/app_providers.dart';
+import 'data/reminder_plan.dart';
 import 'providers/focus_session_provider.dart';
+import 'providers/reminder_providers.dart';
 import 'router/app_router.dart';
 import 'services/native_bridge.dart';
 import 'theme/app_theme.dart';
 import 'widgets/focus_feedback.dart';
+import 'widgets/launch_overlay.dart';
 
 class DisGretApp extends ConsumerStatefulWidget {
   const DisGretApp({super.key});
@@ -39,6 +42,11 @@ class _DisGretAppState extends ConsumerState<DisGretApp> {
       if (!mounted) return;
       ref.read(nativeBridgeProvider).listenForActions(_onNativeAction);
       _saveNativeEvents();
+      _applyReminders(ref.read(reminderPlanProvider));
+      // 2.2 A tapped reminder leads to Hôm nay, where "Bắt đầu" is (spec 009 US1).
+      ref
+          .read(reminderServiceProvider)
+          .listenForTaps(() => ref.read(routerProvider).go(AppRoutes.today));
     });
   }
 
@@ -46,6 +54,18 @@ class _DisGretAppState extends ConsumerState<DisGretApp> {
   void dispose() {
     _lifecycleListener.dispose();
     super.dispose();
+  }
+
+  /// 2.2 Nhắc giờ học (spec 009): replaces the scheduled reminders with the current plan, and
+  /// asks for the notification permission once, when the first reminder exists.
+  Future<void> _applyReminders(List<PlannedReminder> plan) async {
+    final service = ref.read(reminderServiceProvider);
+    await service.replaceAll(plan);
+    final settings = ref.read(reminderSettingsRepositoryProvider);
+    if (plan.isNotEmpty && !settings.permissionAsked) {
+      await settings.markPermissionAsked();
+      await service.requestPermission();
+    }
   }
 
   Future<void> _saveNativeEvents() async {
@@ -125,6 +145,7 @@ class _DisGretAppState extends ConsumerState<DisGretApp> {
   @override
   Widget build(BuildContext context) {
     ref.listen(focusSessionProvider, _onSessionChanged);
+    ref.listen(reminderPlanProvider, (_, plan) => _applyReminders(plan));
 
     return MaterialApp.router(
       title: 'DisGret',
@@ -136,6 +157,8 @@ class _DisGretAppState extends ConsumerState<DisGretApp> {
       locale: const Locale('vi'),
       supportedLocales: const [Locale('vi')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      // 5.3 Gret swims across once when DisGret opens, above every screen (spec 011).
+      builder: (context, child) => LaunchOverlay(child: child ?? const SizedBox.shrink()),
     );
   }
 }

@@ -63,7 +63,13 @@ class _ReportViewState extends ConsumerState<ReportView> {
     final perfect = HabitScience.perfectDays(histories, start, today, today: today);
 
     return ListView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        // The floating tab bar covers the bottom of the screen (spec 010).
+        AppSpacing.md + MediaQuery.paddingOf(context).bottom,
+      ),
       children: [
         Row(
           children: [
@@ -325,6 +331,7 @@ class _CompletedBarChartState extends State<_CompletedBarChart> {
                   touchTooltipData: BarTouchTooltipData(
                     getTooltipColor: (_) => scheme.secondary,
                     tooltipBorderRadius: AppRadius.cardBorder,
+                    fitInsideHorizontally: true,
                     getTooltipItem: (group, groupIndex, rod, rodIndex) =>
                         BarTooltipItem('${rod.toY.toInt()} lần', _bubbleStyle(theme)!),
                   ),
@@ -470,6 +477,8 @@ class _RateLineChartState extends State<_RateLineChart> {
               touchTooltipData: LineTouchTooltipData(
                 getTooltipColor: (_) => scheme.secondary,
                 tooltipBorderRadius: AppRadius.cardBorder,
+                // The latest month sits at the right edge: keep its bubble inside the card.
+                fitInsideHorizontally: true,
                 getTooltipItems: (touched) => [
                   for (final spot in touched)
                     LineTooltipItem('${spot.y.round()}%', _bubbleStyle(theme)!),

@@ -86,10 +86,11 @@ flutter build apk --release      # tạo build/app/outputs/flutter-apk/app-relea
   Reset break chỉ có trên Android.
 - APK release đang ký bằng khoá debug: đủ để cài lên máy ảo hay máy thật để demo, chưa đưa lên
   cửa hàng được.
-- Font Be Vietnam Pro nằm sẵn trong `assets/fonts/` nên không cần mạng.
-- Đổi logo: thay `assets/branding/logo_tam.png` (512×512) và `assets/launcher/logo_foreground.png`
-  (bản có khoảng đệm cho icon và màn khởi động Android 12+), rồi chạy
-  `dart run flutter_launcher_icons` và `dart run flutter_native_splash:create`.
+- Phông Baloo 2 (tiêu đề) và Nunito (nội dung) nằm sẵn trong `assets/fonts/` nên không cần mạng.
+- Đổi logo: sửa `assets/branding/logo.svg` (app vẽ trực tiếp file này), xuất lại 3 file PNG trong
+  `assets/launcher/` (từ logo.svg và logo_free.svg, bản không nền cho icon và màn khởi động),
+  rồi chạy `dart run flutter_launcher_icons` và `dart run flutter_native_splash:create`. Xem
+  docs/architecture/design-system.md.
 
 ## Cấp quyền trên máy ảo
 
@@ -130,9 +131,14 @@ Cài đặt → **Ứng dụng cần nhắc**. Muốn xem trước màn can thi�
 
 ### Trên lớp
 
-1. **Onboarding.** Mở DisGret → chọn độ dài reel → **Tiếp tục** → trả lời 4 câu quiz động lực.
+1. **Onboarding.** Mở DisGret → màn chờ: Gret bơi qua nền xanh kèm bong bóng, "Đang lặn xuống
+   biển…" (khoảng 1,4 giây) → 4 trang story Gret kể về app (tự lật sau 4 giây, chạm phải/trái
+   để sang/lùi, **Bỏ qua** để vào thẳng câu hỏi) → Gret hỏi tên gọi, nhập "Khôi" (để trống cũng
+   được) → **Tiếp tục** → chọn độ dài reel → **Tiếp tục** → trả lời 4
+   câu quiz động lực trong khung suy nghĩ của Gret → chọn app hay kéo mình đi → **Tiếp tục**.
    Ở bước mục tiêu: nhập mục tiêu (ví dụ "Qua môn Tư Duy Tính Toán"), lý do, thói quen "Ôn bài",
-   số phút tối thiểu chọn **Tự nhập → 1** → **Vào DisGret**.
+   số phút tối thiểu chọn **Tự nhập → 1** → **Vào DisGret**: đầu màn Hôm nay ghi "DisGret" và
+   "Chào buổi sáng, Khôi" (đổi tên trong **Cài đặt → Tên gọi**).
    > Vì sao 1 phút: trong phiên "5 phút" của kịch bản, thời gian ở YouTube và chờ ở màn chặn bị trừ
    > vào thời gian tập trung, nên phiên chỉ còn khoảng 1–2 phút tập trung thật. Mức tối thiểu
    > 1 phút đảm bảo cuối phiên thói quen hoàn thành và streak tăng.
@@ -148,13 +154,18 @@ Cài đặt → **Ứng dụng cần nhắc**. Muốn xem trước màn can thi�
 3. **Hôm nay → Bắt đầu** → bước động lực toàn màn hình (không có thanh tab): reel **1/3** phát
    một lần; vuốt không đổi reel; chạm để tạm dừng. Hết reel (khoảng 15–25 giây) thì hiện thẻ kết
    thúc: **Bắt đầu N phút**, **Chỉ 5 phút thôi**, **Tiếp**. (Không bắt buộc: **Tiếp** để xem reel
-   2/3.) → **Chỉ 5 phút thôi** → màn phiên học đếm ngược từ 05:00 (thật ra 100 giây). (Hoặc
-   **Bỏ qua** bất cứ lúc nào để vào học ngay với số phút của Hôm nay.)
+   2/3.) → **Chỉ 5 phút thôi** → phiên học ở **Quán San Hô** (nơi học mặc định): Gret ngồi bàn
+   giữa, chủ quán Rùa chào "Chào mừng đến Quán San Hô!", ba bạn biển Ẩn · Toán, Mochi · Văn, Sao ·
+   Tiếng Anh cùng học; cửa sổ nhìn ra biển của Gret. Đồng hồ treo tường đếm ngược từ 05:00 (thật ra
+   100 giây), thỉnh thoảng một xao nhãng trôi tới và bị Gret hất văng. Trong phút đầu, chạm
+   **Chào cả quán!** → Gret nói, một bạn đáp lại. (Hoặc **Bỏ qua** bất cứ lúc nào để vào học ngay
+   với số phút của Hôm nay.)
    - (Không bắt buộc) Bấm mũi tên quay lại → về Hôm nay, phiên vẫn chạy; dải "phiên đang chạy"
      trên thanh tab có ở cả 3 tab, chạm để về phiên. Bấm **Bắt đầu** lúc này cũng chỉ mở lại
      phiên đang chạy, không tạo phiên mới.
 4. **Lần chặn 1.** Bấm Home, mở YouTube → màn can thiệp đếm ngược **10 giây** →
-   **Quay lại học** → về màn phiên học, số lần xao nhãng là 1.
+   **Quay lại học** → về màn phiên học, số lần xao nhãng là 1, một bạn biển nói "Mừng bạn quay
+   lại!" (hoặc câu tương tự).
 5. **Lần chặn 2.** Mở YouTube → chờ **15 giây** → **Xem 1 reel động lực** → bước động lực chiếu
    đúng một reel **"Get back to work!"** (1/1, không có **Bỏ qua** hay **Tiếp**; đồng hồ phiên tạm
    dừng khi xem) → **Quay lại học**.
@@ -167,7 +178,27 @@ Cài đặt → **Ứng dụng cần nhắc**. Muốn xem trước màn can thi�
 8. **Hết giờ.** Phiên chạy nốt khoảng nửa phút rồi tự mở **Tổng kết**: thời gian tập trung,
    3 lần xao nhãng, Reset break đã chặn 3 lần, 1 lần nghỉ có chủ đích → chọn số sao →
    **Lưu** → hiện **"+1 ngày streak 🔥"** → **Về Hôm nay**: vòng streak lên **6 ngày**.
-9. **Tiến độ.** Tab **Tiến độ** → đoạn **Phiên học**: biểu đồ phút tập trung 7 ngày, tỉ lệ lựa
+9. **Góc của Gret.** Ở **Hôm nay**, bấm nút móc áo góc phải cảnh biển (kèm số ngọc trai: 1 ngọc
+   cho mỗi 5 phút tập trung) → tab **Tủ đồ**: đổi **Nơ hồng** (20 ngọc) → **Mặc** → về Hôm nay
+   thấy Gret đeo nơ. Tab **Biển**: rạn san hô, biển băng, đáy biển sâu mở theo chuỗi ngày; rừng
+   tảo bẹ, núi lửa ngầm, thành phố chìm, vịnh hoàng hôn đổi bằng 150–300 ngọc, mua xong thành một
+   hòn đảo riêng trên bản đồ biển; tab
+   **Linh vật**: cua **Ẩn** (300 ngọc), bạch tuộc **Mochi** "Sắp có" (bán bằng tiền thật sau).
+10. **Bản đồ biển.** Tab **Thói quen** → nút bản đồ trên thanh tiêu đề: bản đồ toàn màn hình
+   lướt từ toàn cảnh vào đảo có Gret. Mỗi mục tiêu là một hòn đảo có bãi cát, rạn san hô (hoặc
+   băng, đá núi lửa, cỏ tuỳ vùng biển) và cá bơi quanh; mỗi thói quen là một địa danh (hang cá,
+   xác tàu, rương báu…) kèm "n/66", lớn dần ở mốc 7/21/40/66 ngày; chưa làm ngày nào là một cái
+   phao "?". Bóng tối tan dần quanh địa danh theo số ngày đã làm. Kéo, chụm để
+   phóng to, nút +/− và **Về chỗ Gret**; chạm vào đảo để xem từng điểm và mốc 7/21/40/66 ngày.
+   Phiên học diễn ra ở biển của đảo đó (ở Quán San Hô thì cửa sổ nhìn ra biển đó).
+11. **Đổi nơi học.** Ở **Hôm nay**, thẻ **Học tiếp** ghi "ở Quán San Hô" → **Đổi thói quen hoặc
+   thời lượng** → **Học ở**: chọn **Biển của Gret** → **Dùng kế hoạch này**: phiên sau diễn ra trong
+   biển như cũ. Các bạn biển là nhân vật của Gret, không phải người thật (ADR-0011).
+12. **Nhắc giờ học.** Tab **Thói quen** → mở thói quen → **Sửa** → bật **Nhắc nhở**, chọn giờ
+   khoảng 2 phút sau → **Lưu**. Lần đầu có lời nhắc, Android hỏi quyền thông báo → **Cho phép**.
+   Đúng giờ (có thể trễ vài phút) Gret báo "Gret đang đợi bạn 🐟 – Tới giờ … rồi"; chạm vào để mở
+   DisGret. Đã làm xong thói quen hôm nay thì hôm nay không nhắc nữa (ADR-0006).
+13. **Tiến độ.** Tab **Tiến độ** → đoạn **Phiên học**: biểu đồ phút tập trung 7 ngày, tỉ lệ lựa
    chọn trên màn can thiệp, tỉ lệ reel dẫn tới bắt đầu học, thời gian quay lại trung bình (dữ liệu
    mẫu cộng với lượt demo vừa xong).
 
@@ -194,6 +225,10 @@ Mỗi file ghi mã thành phần ở dòng đầu. `kotlin/` là
 | 4.2 | Ghi nhận, streak, điểm sức mạnh, màn chi tiết, Báo cáo (trong Tiến độ) | `lib/data/habit_progress.dart`, `lib/data/habit_science.dart`, `lib/data/repositories/habit_log_repository.dart`, `lib/widgets/habit_today_card.dart`, `lib/widgets/habit_week_card.dart`, `lib/widgets/habit_check_ring.dart`, `lib/widgets/habit_heat_map.dart`, `lib/widgets/month_calendar.dart`, `lib/screens/habit_detail_screen.dart`, `lib/screens/report_screen.dart` (`ReportView`), `lib/screens/my_habits_screen.dart`. Đã cất (ADR-0004): `lib/data/achievements.dart`, `lib/widgets/level_badge.dart`, `lib/screens/achievements_screen.dart`, `lib/widgets/habit_card.dart`, `lib/widgets/habit_journey.dart` |
 | 5.1 | Khung app, 3 tab, Hôm nay, kế hoạch phiên, Tiến độ, chuỗi giao diện | `lib/main.dart`, `lib/app.dart`, `lib/router/app_router.dart`, `lib/screens/main_shell.dart`, `lib/screens/today_screen.dart`, `lib/data/session_plan.dart`, `lib/widgets/session_plan_sheet.dart`, `lib/screens/progress_screen.dart`, `lib/screens/settings_screen.dart`, `lib/providers/app_providers.dart`, `lib/l10n/app_strings.dart`, `kotlin/MainActivity.kt` |
 | 5.2 | Giao diện (design system) | `lib/theme/app_theme.dart`, `lib/widgets/app_logo.dart`, `lib/widgets/gradient_pill_button.dart`, `lib/widgets/gradient_progress_bar.dart`, `lib/widgets/progress_ring.dart`, `lib/widgets/streak_ring.dart`, `assets/fonts/`, `assets/branding/`, `assets/launcher/` |
+| 5.3 | Gret và biển sống: độ trong của biển, Gret trên Hôm nay, màn chờ, onboarding dạng story, phiên học trong biển | `lib/widgets/launch_overlay.dart`, `lib/providers/launch_providers.dart`, `lib/data/sea_clarity.dart`, `lib/data/mascot_mood.dart`, `lib/providers/sea_providers.dart`, `lib/widgets/sea/`, `lib/widgets/mascot/`, `lib/widgets/motion/`, `assets/mascot/gret/`, `lib/screens/onboarding_screen.dart`, `lib/screens/focus_screen.dart` |
+| 5.4 | Góc của Gret: ngọc trai, tủ đồ, vùng biển, linh vật | `lib/data/pearls.dart`, `lib/data/gret_corner_catalog.dart`, `lib/data/mascot_species.dart`, `lib/data/repositories/gret_corner_repository.dart`, `lib/providers/gret_corner_providers.dart`, `lib/screens/gret_corner_screen.dart`, `assets/mascot/outfits/`, `assets/mascot/crab/`, `assets/mascot/octopus/` |
+| 5.5 | Bản đồ biển: mỗi mục tiêu một đảo, mỗi thói quen một điểm khám phá, toàn màn hình | `lib/data/sea_map.dart`, `lib/providers/sea_map_providers.dart`, `lib/widgets/sea/sea_world.dart`, `lib/screens/sea_map_screen.dart`, `lib/screens/habits_screen.dart` |
+| 5.6 | Quán San Hô: học cùng các bạn biển của Gret, chọn nơi học | `lib/data/sea_cafe.dart`, `lib/data/study_place.dart`, `lib/data/repositories/study_place_repository.dart`, `lib/providers/sea_cafe_providers.dart`, `lib/widgets/cafe/`, `lib/widgets/session_plan_sheet.dart`, `lib/screens/focus_screen.dart`, `assets/mascot/turtle/`, `assets/mascot/starfish/` |
 | 6.2 | Mô hình dữ liệu, lưu trữ Hive | `lib/data/models/`, `lib/data/repositories/`, `lib/data/hive_boxes.dart`, `lib/data/date_utils.dart`, `lib/data/mock_data.dart` |
 | 7.1 | Quyền | `lib/screens/reset_break_permissions_screen.dart`, `lib/widgets/reset_break_sheet.dart`, `kotlin/AppPermissions.kt` |
 | 7.2 | Dịch vụ theo dõi app, cầu nối Kotlin | `kotlin/FocusGuardService.kt`, `kotlin/NativeChannel.kt`, `kotlin/NativeActions.kt`, `lib/services/native_bridge.dart` |

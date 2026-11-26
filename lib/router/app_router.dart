@@ -15,8 +15,10 @@ import '../screens/habit_form_screen.dart';
 import '../screens/habits_screen.dart';
 import '../screens/my_habits_screen.dart';
 import '../screens/main_shell.dart';
+import '../screens/gret_corner_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../screens/quiz_screen.dart';
+import '../screens/sea_map_screen.dart';
 import '../screens/motivation_screen.dart';
 import '../screens/reset_break_permissions_screen.dart';
 import '../screens/settings_screen.dart';
@@ -46,6 +48,12 @@ class AppRoutes {
   static const String habitDetailPath = '/habit/:id';
   static const String habitFormPath = '/habit-form';
   static const String myHabits = '/my-habits';
+
+  /// 5.4 Góc của Gret: wardrobe, seas and mascots (spec 004).
+  static const String gretCorner = '/gret-corner';
+
+  /// 5.5 Bản đồ biển, full screen (spec 005).
+  static const String seaMap = '/sea-map';
 
   /// 1.4 Motivation step with a context: "start" (before a session) or "distracted" (after one).
   static String motivationFor(String reelContext) => '$motivation?context=$reelContext';
@@ -137,6 +145,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: AppRoutes.blockedApps, builder: (context, state) => const BlockedAppsScreen()),
       GoRoute(path: AppRoutes.myHabits, builder: (context, state) => const MyHabitsScreen()),
+      GoRoute(path: AppRoutes.gretCorner, builder: (context, state) => const GretCornerScreen()),
+      GoRoute(path: AppRoutes.seaMap, builder: (context, state) => const SeaMapScreen()),
       GoRoute(
         path: AppRoutes.habitDetailPath,
         builder: (context, state) => HabitDetailScreen(habitId: state.pathParameters['id']!),

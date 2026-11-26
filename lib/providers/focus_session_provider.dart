@@ -14,6 +14,7 @@ import '../data/repositories/hive_repository.dart';
 import '../services/focus_session_timer.dart';
 import '../services/native_bridge.dart';
 import 'app_providers.dart';
+import 'sea_cafe_providers.dart';
 
 /// chưa bắt đầu → đang chạy → kết thúc.
 enum FocusPhase { setup, running, finished }
@@ -107,6 +108,10 @@ class FocusSessionNotifier extends Notifier<FocusSessionState> {
   FocusSessionTimer? _timer;
   Timer? _ticker;
   String? _sessionId;
+
+  /// 5.3 Id of the current (running or finished, not yet reset) session, so the sea clarity can
+  /// tell whether it is already saved (feature 003, research R1 and R7).
+  String? get sessionId => _sessionId;
 
   /// Đồng hồ đang dừng vì người dùng ở màn Reels, không phải do chọn nghỉ.
   bool _pausedForReels = false;
@@ -392,6 +397,7 @@ class FocusSessionNotifier extends Notifier<FocusSessionState> {
       awaySeconds: state.totalAway.inSeconds,
       selfRating: rating,
       note: note,
+      place: ref.read(studyPlaceProvider),
     );
     await ref.read(sessionRepositoryProvider).save(session);
     await ref.read(habitLogsProvider.notifier).recordSession(session);

@@ -1,25 +1,44 @@
-// 5.1 Màn Hôm nay.
+// 5.1 Màn Hôm nay. 5.3 Gret và biển sống (feature 003). 5.4 Góc của Gret (feature 004).
 // Answers only "what do I study now, and for how long" (spec 001 US1, ADR-0002): goal, next habit,
 // planned minutes, a small streak and exactly ONE control into a session. The plan comes from
-// sessionPlanProvider (lib/data/session_plan.dart).
+// sessionPlanProvider (lib/data/session_plan.dart). Feature 003 adds the living sea on top: Gret,
+// the clarity ring and the streak card (spec 003 FR-009, FR-010). The sea fills the top of the
+// screen behind a transparent header; the wardrobe button sits in the header so it never covers
+// what Gret says.
+import 'dart:async';
+import 'dart:math' as math;
+
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../data/mascot_mood.dart';
 import '../data/models/goal.dart';
 import '../data/models/reel.dart';
+import '../data/sea_time.dart';
 import '../data/session_plan.dart';
+import '../data/study_place.dart';
 import '../l10n/app_strings.dart';
 import '../providers/app_providers.dart';
 import '../providers/focus_session_provider.dart';
+import '../providers/gret_corner_providers.dart';
+import '../providers/sea_cafe_providers.dart';
+import '../providers/sea_providers.dart';
 import '../router/app_router.dart';
 import '../services/focus_session_timer.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_logo.dart';
 import '../widgets/empty_goal_view.dart';
 import '../widgets/gradient_pill_button.dart';
+import '../widgets/mascot/mascot_bubbles.dart';
+import '../widgets/mascot/mascot_look.dart';
+import '../widgets/motion/staggered_entrance.dart';
+import '../widgets/sea/clarity_card.dart';
+import '../widgets/sea/sea_painter.dart';
+import '../widgets/sea/sea_scene.dart';
 import '../widgets/session_plan_sheet.dart';
-import '../widgets/streak_ring.dart';
+import '../widgets/streak_card.dart';
 
 class TodayScreen extends ConsumerWidget {
   const TodayScreen({super.key});
@@ -27,29 +46,280 @@ class TodayScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final plan = ref.watch(sessionPlanProvider);
+    final now = ref.watch(clockProvider)();
+    final name = ref.watch(profileProvider)?.displayName ?? '';
+    // The header sits on the sky, which follows the clock rather than dark mode (spec 013).
+    final sky = AppTheme.forSky(night: SeaTime.isNight(now));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Row(
-          children: [
-            AppLogo(size: 32),
-            SizedBox(width: AppSpacing.sm),
-            Text(AppStrings.appName),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(AppIcons.settings),
-            tooltip: AppStrings.settings,
-            onPressed: () => context.push(AppRoutes.settings),
+    final header = AppBar(
+      // Transparent over the sea; the sky's surface once the cards scroll under it.
+      backgroundColor: WidgetStateColor.resolveWith(
+        (states) => states.contains(WidgetState.scrolledUnder)
+            ? sky.colorScheme.surface
+            : AppColors.transparent,
+      ),
+      surfaceTintColor: AppColors.transparent,
+      // No divider across the sky.
+      shape: const Border(),
+      // Status bar icons readable on the day sky (dark) and the night sky (light).
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: AppColors.transparent,
+        statusBarIconBrightness: sky.brightness == Brightness.light
+            ? Brightness.dark
+            : Brightness.light,
+        statusBarBrightness: sky.brightness,
+      ),
+      title: Row(
+        children: [
+          const AppLogo(size: 32),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 5.1 "DisGret" first, then the greeting with the student's name (spec 007).
+                const Text(AppStrings.appName, overflow: TextOverflow.ellipsis),
+                Text(
+                  AppStrings.greetingFor(now, name),
+                  style: sky.textTheme.bodySmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ],
       ),
+      actions: [
+        const _CornerButton(),
+        IconButton(
+          icon: const Icon(AppIcons.settings),
+          tooltip: AppStrings.settings,
+          onPressed: () => context.push(AppRoutes.settings),
+        ),
+      ],
+    );
+
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: PreferredSize(
+        preferredSize: header.preferredSize,
+        child: Theme(data: sky, child: header),
+      ),
       body: switch (plan.state) {
-        SessionPlanState.noGoal => const EmptyGoalView(),
-        SessionPlanState.noHabit => _NoHabitView(goal: plan.goal!),
+        SessionPlanState.noGoal => const _WithSea(child: EmptyGoalView()),
+        SessionPlanState.noHabit => _WithSea(child: _NoHabitView(goal: plan.goal!)),
         _ => _PlanView(plan: plan),
       },
+    );
+  }
+}
+
+/// The sea with Gret in it, filling Hôm nay behind the content and scrolling up with it (spec 010
+/// and its 2026-11-25 amendment).
+/// Tapping Gret shows a short line for its mood for a few seconds and never starts a session
+/// (spec 003 FR-010). The content scrolls above the sea, so it gets [talk] for its Gret area.
+class _SeaBackdrop extends ConsumerStatefulWidget {
+  const _SeaBackdrop({required this.topInset, required this.builder});
+
+  /// Height of the status bar and header drawn over the sky.
+  final double topInset;
+
+  /// The content over the sea; [talk] makes Gret say a line.
+  final Widget Function(VoidCallback talk) builder;
+
+  @override
+  ConsumerState<_SeaBackdrop> createState() => _SeaBackdropState();
+}
+
+class _SeaBackdropState extends ConsumerState<_SeaBackdrop> {
+  final math.Random _random = math.Random();
+  Timer? _hide;
+  String? _line;
+
+  /// How far the cards have scrolled: the sea and Gret move up by the same amount.
+  final ValueNotifier<double> _scrolled = ValueNotifier(0);
+
+  bool _onScroll(ScrollNotification notification) {
+    if (notification.depth == 0 && notification.metrics.axis == Axis.vertical) {
+      _scrolled.value = math.max(0, notification.metrics.pixels);
+    }
+    return false;
+  }
+
+  void _talk() {
+    final lines = MascotLook.lines(ref.read(seaStateProvider).mood);
+    _hide?.cancel();
+    setState(() => _line = lines[_random.nextInt(lines.length)]);
+    _hide = Timer(AppMotion.speechBubble, () {
+      if (mounted) setState(() => _line = null);
+    });
+  }
+
+  @override
+  void dispose() {
+    _hide?.cancel();
+    _scrolled.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sea = ref.watch(seaStateProvider);
+    final look = ref.watch(gretLookProvider);
+    final line = _line;
+
+    return LayoutBuilder(
+      builder: (context, constraints) => Stack(
+        children: [
+          // Deeper water shows under the sea once it scrolls up.
+          Positioned.fill(
+            child: ColoredBox(
+              key: const ValueKey('today-deep-water'),
+              color: SeaPainter.deepColour(
+                clarity: sea.clarity,
+                isNight: SeaTime.isNight(ref.watch(clockProvider)()),
+                place: look.place,
+              ),
+            ),
+          ),
+          ValueListenableBuilder<double>(
+            valueListenable: _scrolled,
+            builder: (context, scrolled, scene) => Positioned(
+              top: -scrolled,
+              left: 0,
+              right: 0,
+              height: constraints.maxHeight,
+              child: scene!,
+            ),
+            child: SeaScene(
+              clarity: sea.clarity,
+              mood: sea.mood,
+              variant: SeaSceneVariant.full,
+              look: look,
+              gretAlignment: AppMascot.todayGretAlignment,
+              skyShare: AppMascot.todaySkyShare,
+              onMascotTap: _talk,
+              // Below the header, so the line is never hidden behind it.
+              overlay: line == null
+                  ? null
+                  : Padding(
+                      padding: EdgeInsets.only(top: widget.topInset),
+                      child: SpeechBubble(text: line),
+                    ),
+            ),
+          ),
+          Positioned.fill(
+            child: NotificationListener<ScrollNotification>(
+              onNotification: _onScroll,
+              child: widget.builder(_talk),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The transparent top of the content: Gret shows through it, and tapping it taps Gret.
+class _GretArea extends StatelessWidget {
+  const _GretArea({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: SizedBox(height: MediaQuery.sizeOf(context).height * AppMascot.todayCardsTop),
+    );
+  }
+}
+
+/// 5.4 The Góc của Gret button in the header, with the pearls the user has (spec 004 FR-005).
+class _CornerButton extends ConsumerWidget {
+  const _CornerButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final pearls = ref.watch(pearlBalanceProvider);
+
+    return Tooltip(
+      message: AppStrings.cornerOpen,
+      child: Material(
+        color: theme.colorScheme.surface,
+        shape: const StadiumBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => context.push(AppRoutes.gretCorner),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(AppIcons.wardrobe, color: theme.colorScheme.primary),
+                const SizedBox(width: AppSpacing.xs),
+                Text('$pearls', style: theme.textTheme.labelLarge),
+                Icon(AppIcons.pearl, size: AppSpacing.md, color: AppColors.sun),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Empty states keep their single call to action, on a card over a calm full-screen sea.
+class _WithSea extends StatelessWidget {
+  const _WithSea({required this.child});
+
+  final Widget child;
+
+  /// A neutral, half-clear sea: nothing has been planned yet.
+  static const double _calmClarity = 55;
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+
+    return Stack(
+      children: [
+        const Positioned.fill(
+          child: SeaScene(
+            clarity: _calmClarity,
+            mood: MascotMood.neutral,
+            variant: SeaSceneVariant.full,
+            gretAlignment: AppMascot.todayGretAlignment,
+            skyShare: AppMascot.todaySkyShare,
+          ),
+        ),
+        Column(
+          children: [
+            SizedBox(height: MediaQuery.sizeOf(context).height * AppMascot.todayCardsTop),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  0,
+                  AppSpacing.md,
+                  AppSpacing.md + bottomInset,
+                ),
+                child: DecoratedBox(
+                  key: const ValueKey('today-empty-card'),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainer,
+                    borderRadius: AppRadius.cardBorder,
+                  ),
+                  child: ClipRRect(borderRadius: AppRadius.cardBorder, child: child),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -75,42 +345,76 @@ class _PlanView extends ConsumerWidget {
     final streak = ref.watch(overallStreakProvider);
     final isReady = plan.state == SessionPlanState.ready;
 
-    return Column(
-      children: [
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            children: [
-              Center(child: StreakRing(days: streak, size: 96, ringWidth: 6)),
-              const SizedBox(height: AppSpacing.lg),
-              _GoalCard(goal: plan.goal!),
-              const SizedBox(height: AppSpacing.md),
-              if (!isReady) ...[
-                _DayStatusCard(state: plan.state),
-                const SizedBox(height: AppSpacing.md),
-              ],
-              _NextSessionCard(plan: plan),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: SizedBox(
-            width: double.infinity,
-            // Exactly one control leads into a session (FR-004, SC-002). When today is already
-            // done or a rest day, the extra session is a secondary action.
-            child: isReady
-                ? GradientPillButton(
-                    label: AppStrings.start,
-                    onPressed: () => _openStudy(context, ref),
-                  )
-                : OutlinedButton(
-                    onPressed: () => _openStudy(context, ref),
-                    child: Text(AppStrings.extraSession, style: theme.textTheme.titleSmall),
+    final clarity = ref.watch(seaStateProvider.select((sea) => sea.clarity));
+    // The body runs behind the header: its top padding is the status bar plus the header.
+    final topInset = MediaQuery.paddingOf(context).top;
+    // The floating tab bar sits over the bottom of the screen (spec 010).
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+
+    return _SeaBackdrop(
+      topInset: topInset,
+      builder: (talk) => Column(
+        children: [
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                _GretArea(onTap: talk),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  child: StaggeredEntrance(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: ClarityCard(clarity: clarity)),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(child: StreakCard(days: streak)),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      _GoalCard(goal: plan.goal!),
+                      const SizedBox(height: AppSpacing.sm),
+                      if (!isReady) ...[
+                        _DayStatusCard(state: plan.state),
+                        const SizedBox(height: AppSpacing.sm),
+                      ],
+                      _NextSessionCard(plan: plan),
+                    ],
                   ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md + bottomInset,
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              // Exactly one control leads into a session (FR-004, SC-002). When today is already
+              // done or a rest day, the extra session is a secondary action.
+              child: isReady
+                  ? GradientPillButton(
+                      label: AppStrings.start,
+                      // The one action that matters most here gently breathes (button style 2).
+                      breathing: true,
+                      onPressed: () => _openStudy(context, ref),
+                    )
+                  : OutlinedButton(
+                      // On the sea it needs its own background to stay readable.
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.surfaceContainer,
+                      ),
+                      onPressed: () => _openStudy(context, ref),
+                      child: Text(AppStrings.extraSession, style: theme.textTheme.titleSmall),
+                    ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -167,6 +471,7 @@ class _NextSessionCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDemo = ref.watch(profileProvider)?.demoMode ?? false;
+    final place = ref.watch(studyPlaceProvider);
     final secondaryColor = theme.colorScheme.onSurfaceVariant;
 
     return Card(
@@ -196,6 +501,21 @@ class _NextSessionCard extends ConsumerWidget {
                 ),
               ],
             ),
+            // 5.6 Where the session will take place (spec 006 FR-002).
+            if (place == StudyPlace.cafe)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.xs),
+                child: Row(
+                  children: [
+                    Icon(AppIcons.cafe, size: 18, color: secondaryColor),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      AppStrings.nextPlaceCafe,
+                      style: theme.textTheme.bodyMedium?.copyWith(color: secondaryColor),
+                    ),
+                  ],
+                ),
+              ),
             if (isDemo)
               Text(
                 AppStrings.demoHint(FocusSessionTimer.demoSecondsPerMinute),

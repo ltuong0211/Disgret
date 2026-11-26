@@ -9,10 +9,14 @@ import 'package:focus_app/app.dart';
 import 'package:focus_app/data/hive_boxes.dart';
 import 'package:focus_app/data/models/habit.dart';
 import 'package:focus_app/data/models/reel.dart';
+import 'package:focus_app/data/reminder_plan.dart';
 import 'package:focus_app/data/repositories/reel_repository.dart';
 import 'package:focus_app/providers/app_providers.dart';
 import 'package:focus_app/providers/focus_session_provider.dart';
+import 'package:focus_app/providers/launch_providers.dart';
+import 'package:focus_app/providers/reminder_providers.dart';
 import 'package:focus_app/services/native_bridge.dart';
+import 'package:focus_app/services/reminder_service.dart';
 import 'package:focus_app/theme/app_theme.dart';
 import 'package:focus_app/widgets/habit_card.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -37,6 +41,16 @@ final List<Reel> testReels = ReelRepository.parse(
 
 /// [clock] là đồng hồ giả: dùng khi test cần thời gian trôi qua, vì trong widget test
 /// DateTime.now() không chạy theo tester.pump().
+/// 5.3 The sea, Gret and other idle animations loop forever, which `pumpAndSettle` cannot wait
+/// for. Tests run with the system "remove animations" setting on, so every looping widget shows
+/// its end state (spec 003 FR-015). Tests of the animations themselves turn it off again.
+void stillAnimations(WidgetTester tester) {
+  tester.platformDispatcher.accessibilityFeaturesTestValue = const FakeAccessibilityFeatures(
+    disableAnimations: true,
+  );
+  addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+}
+
 Future<void> pumpApp(
   WidgetTester tester, {
   Size size = smallPhone,
@@ -44,10 +58,13 @@ Future<void> pumpApp(
   void Function(bool enabled)? onScreenAwakeChanged,
   FakeNativeBridge? native,
   List<Reel>? reels,
+  FakeReminderService? reminders,
+  bool launchScreen = false,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
+  stillAnimations(tester);
 
   await tester.pumpWidget(
     ProviderScope(
@@ -58,13 +75,16 @@ Future<void> pumpApp(
           (enabled) async => onScreenAwakeChanged?.call(enabled),
         ),
         nativeBridgeProvider.overrideWithValue(native ?? FakeNativeBridge()),
+        // Local notifications are a platform plugin; tests record the plan instead.
+        reminderServiceProvider.overrideWithValue(reminders ?? FakeReminderService()),
+        // The launch screen (spec 011) covers the app for 1.4 s; only its own tests turn it on.
+        launchScreenProvider.overrideWithValue(launchScreen),
         if (clock != null) clockProvider.overrideWithValue(clock),
       ],
       child: const DisGretApp(),
     ),
   );
-  // Chờ font Be Vietnam Pro nạp xong từ assets/fonts/ rồi mới thao tác: nếu font nạp xong
-  // giữa lúc đang vẽ thì chữ đổi kích thước giữa chừng và framework báo lỗi khi vẽ.
+  // Wait for any font still loading before acting, so text does not change size mid-frame.
   await tester.runAsync(GoogleFonts.pendingFonts);
   await tester.pumpAndSettle();
 }
@@ -80,6 +100,7 @@ Future<void> pumpStandalone(
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
+  stillAnimations(tester);
 
   await tester.pumpWidget(
     ProviderScope(
@@ -145,6 +166,26 @@ Future<void> tapAndSettle(WidgetTester tester, Finder finder) async {
   await tester.pumpAndSettle();
   await tester.tap(finder);
   await tester.pumpAndSettle();
+}
+
+/// 2.2 Nhắc giờ học (spec 009): records every plan applied and every permission request.
+class FakeReminderService implements ReminderService {
+  final List<List<PlannedReminder>> plans = [];
+  int permissionRequests = 0;
+
+  @override
+  Future<void> replaceAll(List<PlannedReminder> reminders) async => plans.add(reminders);
+
+  @override
+  Future<void> requestPermission() async => permissionRequests++;
+
+  void Function()? _onTap;
+
+  @override
+  void listenForTaps(void Function() onTap) => _onTap = onTap;
+
+  /// Simulates the student tapping a reminder.
+  void tap() => _onTap?.call();
 }
 
 /// Phần Kotlin giả: mặc định đủ quyền, ghi lại các lệnh Flutter gửi xuống.

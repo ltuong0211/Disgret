@@ -6,6 +6,7 @@
 // - Tuần: thẻ có 7 ô T2–CN chạm để đổi trạng thái (4.2).
 // - Tổng thể: thẻ có lưới chấm 20 tuần (4.2).
 // - Nút tròn "+" nổi góc dưới phải mở màn Tạo thói quen (4.1).
+// 5.5 (feature 005): the map button in the app bar opens the full-screen sea map (/sea-map).
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -24,10 +25,26 @@ import '../widgets/empty_goal_view.dart';
 import '../widgets/goal_habit_sheets.dart';
 import '../widgets/habit_today_card.dart';
 import '../widgets/habit_week_card.dart';
+import '../widgets/ripple_add_button.dart';
+import '../widgets/sticker_chip.dart';
 
 enum _HabitsView { today, week, overall }
 
 enum _MenuAction { myHabits, addGoal, manageGoals }
+
+/// 5.3 Sticker chips: an icon and a pastel colour (AppHabitColors index) per time of day.
+const Map<HabitTimeOfDay?, IconData> _timeFilterIcons = {
+  null: AppIcons.allDay,
+  HabitTimeOfDay.morning: AppIcons.morning,
+  HabitTimeOfDay.afternoon: AppIcons.afternoon,
+  HabitTimeOfDay.evening: AppIcons.evening,
+};
+const Map<HabitTimeOfDay?, int> _timeFilterColours = {
+  null: 0,
+  HabitTimeOfDay.morning: 6,
+  HabitTimeOfDay.afternoon: 7,
+  HabitTimeOfDay.evening: 9,
+};
 
 /// Bộ lọc theo buổi; null là "Tất cả".
 const Map<HabitTimeOfDay?, String> _timeFilters = {
@@ -101,11 +118,12 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
                 filtered.isEmpty
                     ? _FilterEmpty(filter: _filter, onClear: () => setState(() => _filter = null))
                     : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(
+                        // Room for the "+" and the floating tab bar (spec 010).
+                        padding: EdgeInsets.fromLTRB(
                           AppSpacing.md,
                           AppSpacing.sm,
                           AppSpacing.md,
-                          AppSpacing.xxl * 2,
+                          AppSpacing.xxl * 2 + MediaQuery.paddingOf(context).bottom,
                         ),
                         itemCount: filtered.length,
                         separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
@@ -136,6 +154,13 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
         ),
         title: const Text('Thói quen'),
         actions: [
+          // 5.5 The sea map, full screen (spec 005 FR-004).
+          if (goals.isNotEmpty && habits.isNotEmpty)
+            IconButton(
+              icon: const Icon(AppIcons.map),
+              tooltip: AppStrings.mapView,
+              onPressed: () => context.push(AppRoutes.seaMap),
+            ),
           PopupMenuButton<_MenuAction>(
             icon: const Icon(AppIcons.more),
             tooltip: 'Tuỳ chọn',
@@ -151,10 +176,15 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
       body: body,
       floatingActionButton: goals.isEmpty
           ? null
-          : FloatingActionButton(
-              tooltip: 'Tạo thói quen',
-              onPressed: () => context.push(AppRoutes.habitForm(goals.first.id)),
-              child: const Icon(AppIcons.add),
+          // 5.3 Style F: rings ripple out of the "+"; they keep going until the first habit.
+          // Lifted above the floating tab bar (spec 010).
+          : Padding(
+              padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
+              child: RippleAddButton(
+                tooltip: 'Tạo thói quen',
+                keepRippling: habits.isEmpty,
+                onPressed: () => context.push(AppRoutes.habitForm(goals.first.id)),
+              ),
             ),
     );
   }
@@ -179,6 +209,7 @@ class _Header extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, AppSpacing.md, 0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
             width: double.infinity,
@@ -194,14 +225,16 @@ class _Header extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
+          // The column aligns to the start, so the chips line up with the habit cards.
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
                 for (final entry in _timeFilters.entries) ...[
-                  ChoiceChip(
-                    label: Text(entry.value),
-                    showCheckmark: false,
+                  StickerChip(
+                    label: entry.value,
+                    icon: _timeFilterIcons[entry.key],
+                    colour: _timeFilterColours[entry.key]!,
                     selected: filter == entry.key,
                     onSelected: (_) => onFilter(entry.key),
                   ),
@@ -272,11 +305,12 @@ class _TodayView extends ConsumerWidget {
     );
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
+      // Room for the "+" and the floating tab bar (spec 010).
+      padding: EdgeInsets.fromLTRB(
         AppSpacing.md,
         AppSpacing.sm,
         AppSpacing.md,
-        AppSpacing.xxl * 2,
+        AppSpacing.xxl * 2 + MediaQuery.paddingOf(context).bottom,
       ),
       children: [
         for (final habit in pending) cardOf(habit, 'pending'),

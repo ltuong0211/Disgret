@@ -43,6 +43,9 @@ dependencies:
   video_player: ^2.14.1
   wakelock_plus: ^1.8.2
   fl_chart: ^1.3.1
+  flutter_svg: 2.5.0
+  flutter_local_notifications: 22.0.0
+  timezone: ^0.11.2
 
 dev_dependencies:
   flutter_test:
@@ -73,8 +76,16 @@ flutter:
   assets:
     - assets/branding/
     - assets/reels/
-    # Font Be Vietnam Pro (400, 500, 600, 700) kèm giấy phép OFL: google_fonts tự tìm file theo tên,
-    # nên app hiện đúng font khi không có mạng.
+    # 5.3 Gret's SVG layers (feature 003, ADR-0008): one 240×200 canvas shared by every layer.
+    - assets/mascot/gret/
+    - assets/mascot/outfits/
+    - assets/mascot/crab/
+    - assets/mascot/octopus/
+    - assets/mascot/turtle/
+    - assets/mascot/starfish/
+    # Sea map landmarks and their growth layers (spec 012).
+    - assets/map/
+    # Baloo 2 and Nunito OFL licences, shown in the licence page (the fonts are declared below).
     - assets/fonts/
 
   # An image asset can refer to one or more resolution-specific "variants", see
@@ -88,6 +99,15 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
+  # 5.2 Fonts (spec 011): variable fonts from github.com/google/fonts (OFL); the theme picks each
+  # weight on the wght axis. Bundled, so nothing is fetched at run time.
+  fonts:
+    - family: Baloo2
+      fonts:
+        - asset: assets/fonts/Baloo2-Variable.ttf
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-Variable.ttf
   # fonts:
   #   - family: Schyler
   #     fonts:
@@ -103,27 +123,31 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 
-# 5.2 Icon app: dart run flutter_launcher_icons
-# Icon adaptive (Android 8+) gồm nền navy và logo có khoảng đệm, để mặt nạ tròn/bo góc
-# của launcher không cắt mất chữ D. Android 7 dùng nguyên logo.
+# 5.2 Icon app (spec 008): dart run flutter_launcher_icons
+# PNGs in assets/launcher/ are rendered from assets/branding/logo.svg (not bundled in the app).
+# Adaptive icon (Android 8+): sunny-sea blue background and the logo at 72%, so the launcher mask
+# never cuts the bubble or Gret away. Android 7 uses the whole logo.
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/branding/logo_tam.png"
-  adaptive_icon_background: "#0A2A6B"
+  image_path: "assets/launcher/logo.png"
+  # iOS icons must not have transparency (iOS is unsupported, but keep its assets valid).
+  remove_alpha_ios: true
+  adaptive_icon_background: "#1E88E5"
   adaptive_icon_foreground: "assets/launcher/logo_foreground.png"
   # Ảnh đã có sẵn khoảng đệm (logo chiếm 72% khung) nên không thu nhỏ thêm.
   adaptive_icon_foreground_inset: 0
   min_sdk_android: 24
 
-# 5.2 Màn khởi động: dart run flutter_native_splash:create
-# Nền navy, logo ở giữa. Android 12+ tự cắt icon theo hình tròn nên dùng bản có khoảng đệm.
+# 5.2 Splash (spec 008): dart run flutter_native_splash:create
+# Sunny-sea blue with the logo in the middle. The splash and the adaptive icon use the tile-free art
+# (assets/launcher/logo_free.svg) because they sit on the same blue and crop to a circle.
 flutter_native_splash:
-  color: "#0A2A6B"
-  image: assets/branding/logo_tam.png
+  color: "#1E88E5"
+  image: assets/launcher/splash_logo.png
   android_12:
-    color: "#0A2A6B"
-    image: assets/launcher/logo_foreground.png
+    color: "#1E88E5"
+    image: assets/launcher/splash_android12.png
   android: true
   ios: true
   web: false
