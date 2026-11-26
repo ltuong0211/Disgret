@@ -2,7 +2,7 @@
 
 **Branch**: `feature/003-motivation-quiz-formats` | **Date**: 2026-11-23 | **Spec**: [spec.md](spec.md)
 
-**Input**: Feature specification from `specs/003-motivation-quiz-formats/spec.md`
+**Input**: Feature specification from `specs/015-motivation-quiz-formats/spec.md`
 
 **Depends on**: feature 002 (bounded dose, recommender without likes, `MotivationScreen`)
 
@@ -61,7 +61,7 @@ Post-design re-check: unchanged.
 ### Documentation (this feature)
 
 ```text
-specs/003-motivation-quiz-formats/
+specs/015-motivation-quiz-formats/
 ├── plan.md
 ├── research.md
 ├── data-model.md

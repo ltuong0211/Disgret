@@ -1,10 +1,10 @@
 ---
-description: "Tasks for feature 003: richer motivation quiz with video-format preference"
+description: "Tasks for feature 015: richer motivation quiz with video-format preference"
 ---
 
 # Tasks: Richer Motivation Quiz with Video-Format Preference
 
-**Input**: `specs/003-motivation-quiz-formats/` (plan.md, spec.md, research.md, data-model.md,
+**Input**: `specs/015-motivation-quiz-formats/` (plan.md, spec.md, research.md, data-model.md,
 contracts/quiz-flow.md, contracts/reels-catalogue.md, quickstart.md)
 
 **Prerequisite**: feature 002 merged (recommender without likes, `MotivationScreen`).
@@ -22,7 +22,7 @@ contracts/quiz-flow.md, contracts/reels-catalogue.md, quickstart.md)
 - [ ] T001 Add quiz, format-label, profile-summary and per-format stats strings to
       `lib/l10n/app_strings.dart` (wording drafts in research.md R1/R2, contracts/quiz-flow.md).
 - [ ] T002 [P] Team task: watch r1–r6 and record their format (`interview` / `edit` /
-      `studyWithMe` / `story`) in a table in `specs/003-motivation-quiz-formats/research.md` R5;
+      `studyWithMe` / `story`) in a table in `specs/015-motivation-quiz-formats/research.md` R5;
       list which formats still need new reels.
 
 ## Phase 2: Foundational (blocks every story)

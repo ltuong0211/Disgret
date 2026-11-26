@@ -2,6 +2,9 @@
 
 **Feature Branch**: `feature/003-motivation-quiz-formats`
 
+**Renumbered**: written as spec 003; renumbered to 015 on 2026-11-27 when merged with the Gret ocean
+specs 003–014. Task IDs inside stay T001…; cite them as `015-Txxx`.
+
 **Created**: 2026-11-23
 
 **Status**: Draft
