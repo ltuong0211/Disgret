@@ -74,18 +74,21 @@ pricing change effective 2026-09-01.
    privacy notice shown before sign-up advises students under 16 to ask a parent first.
 7. **Deletion:** "Xoá tài khoản" in Cài đặt deletes `users/{uid}` and the Firebase user. Local data
    is kept as guest data unless the user also chooses to delete it.
-8. **Config and secrets:** the lead creates the Firebase project and supplies
-   `android/app/google-services.json` and the Firebase options out of band. Neither is committed
-   (both are git-ignored). Without config the app builds and runs with the account feature hidden,
-   so CI keeps building without secrets. Agents never create cloud projects or accounts.
+8. **Config and secrets:** the lead creates the Firebase project and supplies its four Android
+   app values (API key, app id, project id, sender id) in a git-ignored `firebase.env.json` passed
+   with `--dart-define-from-file`. No `google-services.json` and no Gradle Google-services plugin
+   are used, so nothing in the repository depends on the config. Without it the app builds and runs
+   with the account feature hidden, so CI keeps building without secrets. The Firestore Security
+   Rules file (`firestore.rules`) holds no secret and is committed. Agents never create cloud
+   projects or accounts.
 
 ## Consequences
 
 - The constitution must move to 2.0.0 (Principle II redefined) before any code lands; AGENTS.md,
   ADR-0001 and `docs/architecture/data-model.md` are updated in the same change.
 - A privacy notice in Vietnamese (what is stored, where, how to delete) is shown before sign-up.
-- Synced models gain an `updatedAt` field (default: epoch for old data) and deletions become
-  tombstones while signed in; old Hive data stays readable.
+- Models do not change: change times and deletions are kept in a new `sync_meta` Hive box next to
+  the data (see spec 016 data-model.md), so old Hive data stays readable as it is.
 - Tests cover the sync merge rules as pure functions; the Firebase layer is wrapped behind
   interfaces so widget tests use fakes and never hit the network.
 - Risk: a free-plan quota could be exceeded during a mass demo; the app keeps working locally and

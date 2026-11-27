@@ -238,8 +238,9 @@ turn the network on; within a minute the account shows the new log and session o
 - **FR-012**: After sign-out, a different account signed in on the same phone MUST NOT be able to
   see or receive any data of the previous account (UI, reminders, statistics, sea map, Góc của
   Gret).
-- **FR-013**: Phone-bound settings (blocked-app list, permission flags, demo mode) MUST NOT change
-  when accounts switch and MUST NOT leave the phone.
+- **FR-013**: Phone-bound settings (blocked-app list, permission flags) MUST NOT change when
+  accounts switch and MUST NOT leave the phone. Demo mode is not synced either; it is reset with
+  the rest of the local data on sign-out.
 
 **Sync and offline**
 
@@ -272,8 +273,8 @@ turn the network on; within a minute the account shows the new log and session o
 - **Synced record**: an existing local record (goal, habit, habit log, session, study profile
   choice) that also carries when it was last changed and whether it was deleted, so two phones can
   agree.
-- **Phone-bound settings**: blocked-app list, permission flags, demo mode — never synced, never
-  changed by switching accounts.
+- **Phone-bound settings**: blocked-app list, permission flags — never synced, never changed by
+  switching accounts. (Demo mode is never synced but is reset on sign-out.)
 - **Phone-only history**: events (reel views, interventions, distractions) — never synced, but
   cleared on sign-out so the next account does not inherit them.
 
