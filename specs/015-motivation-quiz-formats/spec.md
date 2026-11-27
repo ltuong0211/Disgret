@@ -22,6 +22,14 @@ vào người dùng, có thể set up bộ câu hỏi như kiểu: 'dạng video
 - Q: Add new reels for formats the 6 bundled videos do not cover, or offer only existing formats?
   → A: Add new reels so every offered format has eligible reels (FR-010, FR-011).
 
+### Session 2026-11-27
+
+- The project lead approved [quiz-and-tags-design.md](quiz-and-tags-design.md) and its defaults
+  for the open questions: add the reasons `growth` and `contribution`; core quiz of 7 questions
+  (about 75 s) plus an optional extra part of 4; the scenario question shows 5 videos; the team
+  collects and labels the videos. FR-001 to FR-006, FR-012 to FR-014, SC-001, SC-002 and the Key
+  Entities below follow that design; where this spec and the design disagree, the design wins.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - The first reel already fits me (Priority: P1)
@@ -105,7 +113,8 @@ Phiên học and confirm each format shows its own count and start share.
 - A reel in the catalogue has no format tag: it is treated as "other" and never wrongly matched.
 - A reel carries an unknown format value (added by a later catalogue edit): treated as "other",
   no crash.
-- The user picks every format in the multi-select question: equivalent to no preference.
+- The user answers "Không chắc" everywhere: the profile has no preference and the playlist is
+  ordered as today (reasons, then catalogue order).
 - Onboarding is interrupted (app killed) during the format questions: on next start onboarding
   resumes as it does today; no half-written profile is saved.
 - After a distraction (playlist of 1, pinned reel first), the pinned reel still wins over format
@@ -115,25 +124,29 @@ Phiên học and confirm each format shows its own count and start share.
 
 ### Functional Requirements
 
-- **FR-001**: The motivation quiz MUST contain at least 6 questions that score the five
-  motivation reasons (today: 4), every question offering every reason once, so the top-2 result
-  is more stable; the existing top-2 rule and tie-break by earliest answer stay.
-- **FR-002**: The quiz MUST add a video-format part: one question "Dạng video nào truyền cảm hứng
-  cho bạn nhất?" (choose up to 2) and one scenario question that confirms the choice (single
-  choice). Formats offered: interview/talk by a well-known person; motivational edit with music
-  and quotes; study-with-me / day-in-the-life of a student; short story or animation; plus
-  "Không chắc / gì cũng được".
-- **FR-003**: The profile MUST store up to 2 preferred video formats, derived from the format
-  answers (direct choice first, scenario answer as tie-break). A profile without formats MUST
-  remain valid and mean "no format preference".
-- **FR-004**: Every reel in the bundled catalogue MUST be classifiable by format; reels without a
-  format, or with an unknown one, MUST be treated as "other".
-- **FR-005**: Reel ranking MUST add a format-match bonus that is smaller than one matching
-  motivation tag, so reason stays the primary signal and format breaks ties; pinned reels, the
-  recently-watched penalty and the playlist length per context (spec 002 FR-002) MUST be
-  unchanged.
-- **FR-006**: Onboarding including the longer quiz MUST still be completable in about one minute
-  (one tap per question, no typing); every quiz step MUST show progress ("Câu 3/8").
+- **FR-001**: The quiz MUST score seven motivation reasons (the five of today plus `growth` "Hiểu
+  biết, giỏi lên mỗi ngày" and `contribution` "Giúp ích người khác") with four reason questions
+  (design §4 Q1–Q4), every question offering every reason once; the top-2 rule and the tie-break
+  by earliest answer stay.
+- **FR-002**: The quiz MUST also ask, as in design §4: preferred video formats (Q5, up to 2),
+  preferred tone (Q7), preferred messengers (Q6, up to 2), a scenario question (Q8), what blocks
+  the user from starting (Q9, up to 2), the nearest study goal (Q10) and what the user never wants
+  to see (Q11, several). Every question MUST offer "Không chắc", which means no preference.
+- **FR-003**: The profile MUST keep the quiz answers and derive from them, by design §5.1: top-2
+  reasons, up to 2 formats, one tone, up to 2 messengers, the themes behind the chosen blockers,
+  one goal, avoided flags and languages. A profile without these answers MUST stay valid and mean
+  "no preference" in every new dimension.
+- **FR-004**: Every reel MUST be readable with the label set of design §3 (motivation, format,
+  tone, messenger, origin, theme, goal, language, flags); a missing or unknown value MUST fall back
+  to the default (format `other`, language `vi`, empty lists) without a crash. The old `tags`
+  field MUST still be read as `motivation`.
+- **FR-005**: Reel ranking MUST follow design §5.2–5.4: drop reels with an avoided flag or
+  language; score with the weights of §5.3 (reason stays the largest single weight); vary formats
+  inside a playlist (§5.4). Pinned reels, the playlist length per context (spec 002 FR-002) and the
+  catalogue order for ties MUST be unchanged. Learning from behaviour (§5.5) is out of scope here.
+- **FR-006**: Onboarding MUST ask only the core part (Q1, Q2, Q5, Q7, Q9, Q10, Q11), one screen
+  per question, with progress ("Câu 3/7"); single-choice questions advance on tap, multi-choice
+  questions have a "Tiếp" button.
 - **FR-007**: Cài đặt MUST show the current motivation profile (top reasons and preferred formats)
   and keep the existing "Làm lại quiz động lực" entry; finishing a retake replaces the profile,
   leaving it early changes nothing.
@@ -145,30 +158,37 @@ Phiên học and confirm each format shows its own count and start share.
   formats offered by the quiz has at least one reel eligible before a session (target: two), so
   every answer can actually change the playlist. Each new reel MUST carry the same catalogue data
   as today (title, motivation tags, length, contexts, source credit) plus its format.
+- **FR-012**: Cài đặt MUST offer "Giúp app hiểu bạn hơn", which asks only the extra part (Q3, Q4,
+  Q6, Q8) and merges the answers into the profile; "Làm lại quiz động lực" asks all 11 questions
+  and replaces the stored answers.
+- **FR-013**: A profile saved before this feature (only top reasons, no answers) MUST keep its
+  reasons until the user answers reason questions again; answering only the extra part MUST count
+  the old reasons as earlier answers.
+- **FR-014**: The quiz MUST NOT ask for grades as numbers, money at home, health, school, age or
+  location (users may be under 18).
 - **FR-011**: New videos MUST be short (15–60 seconds), bundled with the app (no streaming,
   Constitution II), and their sources recorded; their licensing risk MUST be recorded by updating
   ADR-0007 before they are added.
 
 ### Key Entities
 
-- **Motivation profile**: existing entity; gains up to 2 preferred video formats (empty by
-  default). Top-2 motivation reasons and preferred reel length unchanged.
-- **Video format**: a closed list (interview/talk, motivational edit, study-with-me /
-  day-in-the-life, story/animation, other) with a Vietnamese label.
-- **Reel**: existing catalogue entry; gains one format (default "other").
-- **Quiz question**: existing; a question now belongs either to the reason part or to the format
-  part.
+- **Motivation profile**: existing entity; gains the stored quiz answers and the reel preferences
+  derived from them (design §5.1). Top-2 reasons and preferred reel length unchanged.
+- **Reel labels**: closed lists with Vietnamese names (design §3): 7 reasons, 10 formats, 6 tones,
+  8 messengers, 2 origins, 12 themes, 4 goals, 3 languages, 4 flags.
+- **Reel**: existing catalogue entry; gains the labels above with defaults.
+- **Quiz question**: has a stable id (q1–q11), a part (core or extra), a choice limit and answers
+  with stable ids that carry labels.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: A first-time user finishes onboarding, quiz included, in 75 seconds or less in a
+- **SC-001**: A first-time user finishes the core quiz in 75 seconds or less in a
   hallway test with 5 students (median).
-- **SC-002**: For a profile with a preferred format, the first reel of the before-session playlist
-  matches that format in 100% of openings where an eligible reel of that format matches at least
-  as many of the user's motivation reasons as any other eligible reel and no pinned reel applies
-  (reason stays the primary signal, FR-005).
+- **SC-002**: For the worked example of design §5.6 and every unit-test profile, the playlist equals
+  the one computed by hand with the §5 rules; a reel with an avoided flag or language is never
+  shown (100%).
 - **SC-003**: 100% of profiles saved by the previous version load without error and keep their
   motivation reasons.
 - **SC-004**: After one week of use, the share of reels followed by a session start can be read
@@ -181,10 +201,8 @@ Phiên học and confirm each format shows its own count and start share.
 ## Assumptions
 
 - The quiz stays rule-based and on-device (no AI, no network), as in 1.1 and 1.3 today.
-- "About one minute" is the current onboarding target; 8 one-tap steps fit it.
-- The format bonus is half of a motivation-tag match (exact value set in the plan).
-- Tone of voice (gentle vs tough) and reel length preference are out of scope; reel length stays
-  as asked today.
+- Reel length stays as asked today. The Hôm nay invitation to the extra part (design §4) is a
+  follow-up; this feature offers it in Cài đặt.
 - The team, not the user, assigns the format of each bundled reel and sources the new videos;
   implementation of FR-010 waits for those files.
 - The catalogue grows from 6 to about 10–14 reels; the app size grows by roughly 2 MB per reel,

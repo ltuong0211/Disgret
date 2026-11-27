@@ -1,57 +1,86 @@
-# Data Model: Richer Motivation Quiz with Video-Format Preference
+# Data Model: Motivation Quiz, Reel Labels and Matching
 
-## VideoFormat (new enum)
+Revised 2026-11-27 to follow [quiz-and-tags-design.md](quiz-and-tags-design.md) (approved).
 
-| Value | Stored name | Vietnamese label |
+## MotivationType (enum) — changed
+
+Adds `growth` ("Hiểu biết") and `contribution` ("Giúp ích người khác"). Existing names unchanged,
+so stored profiles and reels still parse.
+
+## Reel labels (enums, `lib/data/models/reel_labels.dart`) — new
+
+Every enum has a Vietnamese `label` and `fromName(String?)`: unknown or null → the default.
+
+| Enum | Values (stored name) | Default |
 |---|---|---|
-| interview | `interview` | Phỏng vấn, chia sẻ của người nổi tiếng |
-| edit | `edit` | Video edit truyền động lực |
-| studyWithMe | `studyWithMe` | Study with me, một ngày của học sinh |
-| story | `story` | Câu chuyện ngắn, hoạt hình |
-| other | `other` | Khác (never offered in the quiz, never matches) |
-
-`VideoFormat.fromName(String?)`: unknown or null → `other`.
-
-## UserProfile (Hive `profile` box) — changed
-
-| Field | Type | Default | Rule |
-|---|---|---|---|
-| motivationTypes | List<MotivationType> | — | unchanged: top 2 of 6 answers |
-| preferredFormats | List<VideoFormat> | `[]` | NEW. 0–2 entries, never `other`; unknown stored names dropped on read |
-| preferredReelLength | int | 30 | unchanged |
-| demoMode | bool | false | unchanged |
-
-Profiles written by 001/002 have no `preferredFormats` key → empty list = no preference.
+| VideoFormat | interview, speech, edit, quote, journey, studyWithMe, dayInLife, story, tips, other | other |
+| VideoTone | hype, toughLove, calm, emotional, funny, practical, unknown | unknown |
+| Messenger | celebrity, achiever, athlete, expert, peer, ordinary, character, none | none |
+| Origin | vietnamese, international | vietnamese |
+| ReelTheme | startSmall, digitalDetox, fearCourage, futureSelf, timeMatters, ownPath, consistency, discipline, comeback, selfCompassion, examPressure, gratitude | (unknown names dropped) |
+| StudyGoal | exam, language, grades, skill | (unknown names dropped) |
+| ReelLanguage | vi, enSub, en | vi |
+| ReelFlag | loud, sad, wealthDisplay, fastCuts | (unknown names dropped) |
 
 ## Reel (`assets/reels/reels.json`) — changed
 
 | Field | Type | Default | Rule |
 |---|---|---|---|
-| format | VideoFormat | `other` | NEW, optional in JSON |
-| (others) | | | unchanged: id, assetPath, title, tags, lengthSec, context, pinFirst, source, creditUrl |
-
-Catalogue invariant (SC-006): for each of interview, edit, studyWithMe, story there is ≥1 reel
-with `start` in `context`.
+| tags | List<MotivationType> | `[]` | JSON key `motivation`; falls back to `tags`; unknown names dropped |
+| format | VideoFormat | other | |
+| tone | VideoTone | unknown | `unknown` never matches |
+| messenger | Messenger | none | `none` never matches |
+| origin | Origin | vietnamese | not scored yet (catalogue info) |
+| themes | List<ReelTheme> | `[]` | 1–3 in the team's labels |
+| goals | List<StudyGoal> | `[]` | empty = fits any goal, no bonus |
+| language | ReelLanguage | vi | |
+| flags | List<ReelFlag> | `[]` | |
+| (others) | | | unchanged: id, assetPath, title, lengthSec, context, pinFirst, source, creditUrl |
 
 ## Quiz (pure, `lib/data/motivation_quiz.dart`)
 
-- `motivationQuestions`: 6 × `QuizQuestion` (5 answers, each MotivationType once).
-- `formatQuestions`: Q7 direct (4 formats + "Không chắc", multi ≤2, "Không chắc" exclusive), Q8
-  scenario (4 formats + "Gì cũng được", single).
-- `topMotivationTypes(answers)`: unchanged.
-- `preferredFormatsFrom({Set<VideoFormat> direct, VideoFormat? scenario})` → `List<VideoFormat>`
-  (0–2), rules in research R2.
+- `QuizQuestion`: `id` (q1–q11, stable), `text`, `part` (core / extra), `maxChoices` (1 = single,
+  tap advances), `answers`.
+- `QuizAnswer`: `id` (stable, e.g. `q5.journey`), `text`, optional `hint`, and the labels it
+  carries: `type` (MotivationType?), `formats`, `tone`, `messengers`, `themes`, `goal`, `flags`,
+  `languages`.
+- `quizQuestions`: all 11 in design order; `corePart` / `extraPart` filter by part.
+  `motivationQuestions` (q1–q4) is kept for the reason questions.
+- `topMotivationTypes(answers)`: unchanged rule (top 2, earliest wins ties).
 
-## Score (pure, `ReelRecommender.score`)
+## QuizAnswers / ReelPreferences (`lib/data/models/reel_preferences.dart`) — new
 
-`2 × matching tags + 1 (not watched in 24 h) − 2 (last watched) + 1 (format ∈ preferredFormats)`.
-Pinned-first and `limitFor(context)` unchanged.
+`QuizAnswers` = `Map<String questionId, List<String answerId>>`. An empty list or a missing key
+means "Không chắc". Unknown question or answer ids are ignored on read.
 
-## FocusStats — changed
+`ReelPreferences.fromAnswers(QuizAnswers, {List<MotivationType> legacyTypes})` (pure, design §5.1):
 
 | Field | Type | Rule |
 |---|---|---|
-| formatStats | Map<VideoFormat, ({int shown, int started})> | from `reel_watched`; format looked up by reelId in the current catalogue; unknown id → other |
+| motivationTypes | List<MotivationType> | `topMotivationTypes` over q1..q4 answers in question order; if none of q1..q4 is answered, `legacyTypes` |
+| formats | List<VideoFormat> (0–2) | q5 answers +2 per format, q8 +1; keep the 2 highest; ties: first seen |
+| tone | VideoTone | q7; else q8's tone; else unknown |
+| messengers | List<Messenger> (0–2) | q6 |
+| themes | Set<ReelTheme> | union of q9 answers' themes |
+| goal | StudyGoal? | q10 |
+| avoidFlags | Set<ReelFlag> | q11 |
+| avoidLanguages | Set<ReelLanguage> | q11 |
+
+## UserProfile (Hive `profile` box) — changed
+
+| Field | Type | Default | Rule |
+|---|---|---|---|
+| motivationTypes | List<MotivationType> | — | stored as today; rewritten from answers after any quiz |
+| quizAnswers | QuizAnswers | `{}` | NEW, key `quizAnswers`; profiles from earlier versions have none |
+| preferences | ReelPreferences | — | NEW getter, derived from `quizAnswers` + `motivationTypes` (not stored) |
+
+## Score (pure, `ReelRecommender`)
+
+Hard filter: drop a reel whose flags meet `avoidFlags` or whose language is in `avoidLanguages`.
+Score (design §5.3): +3 per reason match (max 2), +2 per theme match (max 2), +2/+1 first/second
+format, +2 tone, +1 messenger, +1 goal, +2 context bonus (`distracted` and theme `digitalDetox`
+or `startSmall`), +1 not watched in 24 h, −3 last watched. Variety (§5.4) when filling slot 2+.
+Pinned-first, `limitFor(context)` and catalogue order for ties unchanged.
 
 ## Events
 
