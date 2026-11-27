@@ -820,6 +820,18 @@ class AppIcons {
   static const IconData motivationCareer = Icons.work_outline_rounded;
   static const IconData motivationProveYourself = Icons.emoji_events_outlined;
   static const IconData motivationFreedom = Icons.explore_outlined;
+  static const IconData motivationGrowth = Icons.lightbulb_outline_rounded;
+  static const IconData motivationContribution = Icons.volunteer_activism_outlined;
+
+  /// 1.1 Quiz answer cards for the questions that are not about reasons (spec 015).
+  static const IconData quizFormat = Icons.smart_display_outlined;
+  static const IconData quizTone = Icons.graphic_eq_rounded;
+  static const IconData quizMessenger = Icons.record_voice_over_outlined;
+  static const IconData quizScenario = Icons.touch_app_outlined;
+  static const IconData quizBlocker = Icons.hourglass_empty_rounded;
+  static const IconData quizGoal = Icons.flag_outlined;
+  static const IconData quizAvoid = Icons.visibility_off_outlined;
+  static const IconData quizUnsure = Icons.help_outline_rounded;
 
   /// 5.4 Góc của Gret: the wardrobe button and pearls.
   static const IconData wardrobe = Icons.checkroom_rounded;

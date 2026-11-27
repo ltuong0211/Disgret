@@ -74,6 +74,8 @@ Pick the dominant format. If a video mixes two, choose the one that fills most o
 | `tips` | Mẹo học, phương pháp | Concrete how-to: Pomodoro, active recall, planning | "3 cách bắt đầu học khi đang lười" |
 | `other` | Khác | Anything else (default) | |
 
+Both Q5 choices count as favourites (+2); a format only seen in Q8 is liked (+1).
+
 Spec 015 had 4 formats (`interview`, `edit`, `studyWithMe`, `story`). This list splits them more
 finely, because the user's own example ("video phỏng vấn người nổi tiếng", "video hành trình chạm
 đến thành công") names formats that the old list merged.
@@ -271,7 +273,7 @@ Each dimension is a small score table, so the recommender can explain itself ("v
 | Profile field | Filled from | Rule |
 |---|---|---|
 | `motivationTypes` (top 2) | Q1, Q2 (+ Q3, Q4) | +1 per answer; ties go to the earlier question (current `topMotivationTypes`) |
-| `formats` (top 2) | Q5, Q8 | Q5 choice +2 each; Q8 choice +1; keep the 2 highest |
+| `formats` (points) | Q5, Q8 | each format of a Q5 choice +2; the Q8 video's format +1 |
 | `tone` (1) | Q7, Q8 | Q7 choice; if Q7 is "Không chắc", Q8's tone |
 | `messengers` (≤2) | Q6 | as chosen |
 | `blockers` → themes | Q9 | the themes behind each chosen option |
@@ -296,7 +298,7 @@ step still works with 0 reels: it goes straight to the end card with the start b
 |---|---|---|
 | Each `motivation` key in the user's top 2 | +3 (max +6) | Reason stays the main signal (H1) |
 | Each `theme` that answers a chosen blocker | +2 (max +4) | Answers today's actual problem |
-| `format` = user's first format / second format | +2 / +1 | Strong taste signal |
+| `format` is a favourite (most points) / liked (fewer points) | +2 / +1 | Strong taste signal |
 | `tone` = user's tone | +2 | A wrong tone makes people skip |
 | `messenger` in user's messengers | +1 | Weaker signal |
 | `goal` matches user's goal | +1 | Nice to have; empty goal on reel = 0 |
@@ -330,7 +332,7 @@ Q9 "Làm được vài hôm rồi bỏ", Q10 `language`, Q11 `loud`. Context: `s
 | Reel | motivation | theme | format | tone | goal | 24 h | Total |
 |---|---|---|---|---|---|---|---|
 | r7 "4.0 → 8.0 IELTS" (journey, emotional, peer, [proveYourself, growth], [consistency, comeback], language) | 3 | 4 | 2 | 2 | 1 | 1 | **13** |
-| r1 "Bạn đủ thông minh để thay đổi" (interview, toughLove, [proveYourself, career], [fearCourage]) | 6 | 0 | 1 | 0 | 0 | 1 | **8** |
+| r1 "Bạn đủ thông minh để thay đổi" (interview, toughLove, [proveYourself, career], [fearCourage]) | 6 | 0 | 2 | 0 | 0 | 1 | **9** |
 | rX (edit, hype, `loud`, [proveYourself, career]) | removed by the `loud` filter | | | | | | – |
 
 Playlist: r7, then r1 (a different format).

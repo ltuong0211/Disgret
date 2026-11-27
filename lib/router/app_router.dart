@@ -43,6 +43,10 @@ class AppRoutes {
 
   static const String settings = '/settings';
   static const String quiz = '/quiz';
+
+  /// Query value of [quiz] for the extra part only.
+  static const String quizExtraPart = 'extra';
+  static const String quizExtra = '$quiz?part=$quizExtraPart';
   static const String resetBreakPermissions = '/reset-break-permissions';
   static const String blockedApps = '/blocked-apps';
   static const String habitDetailPath = '/habit/:id';
@@ -138,7 +142,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: AppRoutes.focus, builder: (context, state) => const FocusScreen()),
       GoRoute(path: AppRoutes.summary, builder: (context, state) => const SummaryScreen()),
       GoRoute(path: AppRoutes.settings, builder: (context, state) => const SettingsScreen()),
-      GoRoute(path: AppRoutes.quiz, builder: (context, state) => const QuizScreen()),
+      GoRoute(
+        path: AppRoutes.quiz,
+        // `?part=extra` opens "Giúp app hiểu bạn hơn" (spec 015 FR-012).
+        builder: (context, state) =>
+            QuizScreen(extraOnly: state.uri.queryParameters['part'] == AppRoutes.quizExtraPart),
+      ),
       GoRoute(
         path: AppRoutes.resetBreakPermissions,
         builder: (context, state) => const ResetBreakPermissionsScreen(),

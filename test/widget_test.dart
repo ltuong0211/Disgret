@@ -85,13 +85,8 @@ Future<void> _skipToQuiz(WidgetTester tester) async {
   await _tap(tester, find.text('Tiếp tục')); // Độ dài reel.
 }
 
-/// Trả lời đủ 4 câu quiz: 2 câu "sự nghiệp", 2 câu "chứng minh bản thân".
-Future<void> _answerQuiz(WidgetTester tester) async {
-  await _tap(tester, find.text('Có công việc mình thật sự muốn làm'));
-  await _tap(tester, find.text('Đang ở đúng vị trí mình mơ ước'));
-  await _tap(tester, find.text('Không muốn thua chính mình'));
-  await _tap(tester, find.text('Niềm tin rằng mình làm được'));
-}
+/// Trả lời 7 câu quiz của onboarding: "sự nghiệp" rồi "chứng minh bản thân" (spec 015).
+Future<void> _answerQuiz(WidgetTester tester) => answerCoreQuiz(tester);
 
 Future<void> _completeOnboarding() => ProfileRepository().completeOnboarding(
   const UserProfile(motivationTypes: [MotivationType.career], preferredReelLength: 30),
@@ -130,7 +125,7 @@ void main() {
   });
 
   group('Onboarding', () {
-    testWidgets('Lần đầu mở app: giới thiệu, quiz 4 câu, nhập mục tiêu rồi vào Hôm nay', (
+    testWidgets('Lần đầu mở app: giới thiệu, quiz 7 câu, nhập mục tiêu rồi vào Hôm nay', (
       tester,
     ) async {
       await _pumpApp(tester);
@@ -140,7 +135,7 @@ void main() {
       expect(find.text('Bắt đầu'), findsNothing);
 
       await _skipToQuiz(tester);
-      expect(find.text('Câu 1/4'), findsOneWidget);
+      expect(find.text('Câu 1/7'), findsOneWidget);
       expect(find.text('Điều gì khiến bạn muốn cố gắng nhất?'), findsOneWidget);
 
       await _answerQuiz(tester);
@@ -183,16 +178,17 @@ void main() {
       await _pumpApp(tester);
       await _skipToQuiz(tester);
       await _tap(tester, find.text('Có thu nhập tốt, không phải lo chuyện tiền'));
-      expect(find.text('Câu 2/4'), findsOneWidget);
+      expect(find.text('Câu 2/7'), findsOneWidget);
 
       await _tap(tester, find.text('Quay lại'));
-      expect(find.text('Câu 1/4'), findsOneWidget);
+      expect(find.text('Câu 1/7'), findsOneWidget);
       expect(find.byIcon(AppIcons.check), findsOneWidget);
 
       await _tap(tester, find.text('Được tự quyết định cuộc sống của mình'));
       await _tap(tester, find.text('Làm việc ở đâu, lúc nào là do mình chọn'));
-      await _tap(tester, find.text('Không muốn cả đời làm theo ý người khác'));
-      await _tap(tester, find.text('Nhiều lựa chọn hơn cho tương lai'));
+      for (var i = 0; i < 5; i++) {
+        await skipQuizQuestion(tester);
+      }
       await _tap(tester, find.text('Tiếp tục'));
 
       await _enterField(tester, 'Tên mục tiêu', 'A');
@@ -217,9 +213,9 @@ void main() {
       expect(find.text('App nào hay kéo bạn đi nhất?'), findsOneWidget);
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
-      expect(find.text('Câu 4/4'), findsOneWidget);
+      expect(find.text('Câu 7/7'), findsOneWidget);
 
-      await _tap(tester, find.text('Niềm tin rằng mình làm được'));
+      await skipQuizQuestion(tester);
       await _tap(tester, find.text('Tiếp tục'));
       expect(find.text('Giữ lại'), findsOneWidget);
     });
@@ -257,8 +253,8 @@ void main() {
       expect(find.widgetWithText(Chip, 'Tiền bạc'), findsOneWidget);
 
       await _tap(tester, find.text('Làm lại quiz động lực'));
-      expect(find.text('Câu 1/4'), findsOneWidget);
-      await _answerQuiz(tester);
+      expect(find.text('Câu 1/11'), findsOneWidget);
+      await answerFullQuiz(tester);
 
       expect(find.text('Cài đặt'), findsOneWidget);
       // Hàng chip nằm đầu danh sách, có thể đã bị cuộn khỏi màn lúc bấm nút làm lại quiz.
@@ -283,14 +279,70 @@ void main() {
       await _tap(tester, find.byTooltip('Cài đặt'));
       await _tap(tester, find.text('Làm lại quiz động lực'));
       await _tap(tester, find.text('Có công việc mình thật sự muốn làm'));
-      expect(find.text('Câu 2/4'), findsOneWidget);
+      expect(find.text('Câu 2/11'), findsOneWidget);
 
       await _tap(tester, find.byTooltip('Quay lại'));
-      expect(find.text('Câu 1/4'), findsOneWidget);
+      expect(find.text('Câu 1/11'), findsOneWidget);
 
       await _tap(tester, find.byTooltip('Quay lại'));
       expect(find.text('Cài đặt'), findsOneWidget);
       expect(ProfileRepository().profile?.motivationTypes, [MotivationType.money]);
+    });
+  });
+
+  group('Giúp app hiểu bạn hơn (spec 015)', () {
+    testWidgets('Extra part: 4 questions merged into the profile, summary shows formats and tone', (
+      tester,
+    ) async {
+      await ProfileRepository().completeOnboarding(
+        const UserProfile(
+          motivationTypes: [MotivationType.money],
+          preferredReelLength: 45,
+          quizAnswers: {
+            'q5': ['q5.story'],
+          },
+        ),
+      );
+      await _pumpApp(tester);
+      await _tap(tester, find.byTooltip('Cài đặt'));
+      await _tapSettingsItem(tester, 'Giúp app hiểu bạn hơn');
+      expect(find.text('Câu 1/4'), findsOneWidget);
+
+      await _tap(tester, find.text('Tò mò muốn hiểu cho bằng được')); // q3 growth
+      await _tap(tester, find.text('Cảm giác hiểu được điều khó')); // q4 growth
+      expect(find.text('Không quan trọng'), findsOneWidget, reason: 'q6 has its own skip text');
+      await skipQuizQuestion(tester); // q6
+      await _tap(tester, find.text('60 giây: nhạc dồn dập + "Không ai học thay bạn"')); // q8
+
+      expect(find.text('Đã cập nhật hồ sơ, reel sẽ hợp với bạn hơn'), findsOneWidget);
+      final saved = ProfileRepository().profile!;
+      expect(saved.motivationTypes, [MotivationType.growth, MotivationType.money]);
+      expect(saved.quizAnswers.keys, containsAll(['q3', 'q4', 'q5', 'q8']));
+      expect(saved.preferredReelLength, 45);
+
+      await tester.scrollUntilVisible(find.text('Dạng video bạn thích'), -200);
+      expect(find.widgetWithText(Chip, 'Câu chuyện, phim ngắn, hoạt hình'), findsOneWidget);
+      expect(find.widgetWithText(Chip, 'Bùng nổ, hô hào'), findsOneWidget);
+    });
+
+    testWidgets('Multi choice: at most 2 cards, Tiếp only after a choice', (tester) async {
+      await _pumpApp(tester);
+      await _skipToQuiz(tester);
+      await _tap(tester, find.text('Có công việc mình thật sự muốn làm'));
+      await skipQuizQuestion(tester); // q2
+      expect(find.text('Chọn tối đa 2'), findsOneWidget);
+      final next = find.byKey(const ValueKey('quiz-next'));
+      expect(tester.widget<FilledButton>(next).onPressed, isNull);
+
+      await _tap(tester, find.text('Phỏng vấn người nổi tiếng, người thành công'));
+      await _tap(tester, find.text('Bài phát biểu truyền cảm hứng'));
+      await _tap(tester, find.text('Mẹo học ngắn gọn, làm được ngay')); // ignored: limit 2
+      expect(
+        tester.getSemantics(find.text('Mẹo học ngắn gọn, làm được ngay')),
+        isSemantics(isSelected: false),
+      );
+      await _tap(tester, next);
+      expect(find.text('Câu 4/7'), findsOneWidget);
     });
   });
 

@@ -17,58 +17,58 @@ format questions, 4 formats) is replaced; its unfinished tasks are folded in bel
 
 ## Phase 1: Setup
 
-- [ ] T001 Add quiz, label, settings and button strings to `lib/l10n/app_strings.dart`
+- [x] T001 Add quiz, label, settings and button strings to `lib/l10n/app_strings.dart`
       (design §3, §4).
 - [ ] T002 [P] Team task: label r1–r6 with the full label set (design §3, §7) and put the agreed
       values in `assets/reels/reels.json`.
 
 ## Phase 2: Foundational
 
-- [ ] T003 [P] Tests in `test/reel_labels_test.dart`: every label enum's `fromName` maps unknown
+- [x] T003 [P] Tests in `test/reel_labels_test.dart`: every label enum's `fromName` maps unknown
       and null to its default (data-model.md Reel labels); `Reel.fromMap` reads `motivation` and
       falls back to `tags`, drops unknown names and fills defaults (data-model.md Reel.tags,
       Reel.format, Reel.tone, Reel.messenger, Reel.origin, Reel.themes, Reel.goals, Reel.language,
       Reel.flags).
-- [ ] T004 Add `growth` and `contribution` to `lib/data/models/motivation_type.dart` (data-model.md
+- [x] T004 Add `growth` and `contribution` to `lib/data/models/motivation_type.dart` (data-model.md
       MotivationType) with icons; create `lib/data/models/reel_labels.dart` (data-model.md Reel
       labels) and extend `lib/data/models/reel.dart` (data-model.md Reel.*). T003 passes.
-- [ ] T005 [P] Tests in `test/reel_preferences_test.dart` for `ReelPreferences.fromAnswers`
+- [x] T005 [P] Tests in `test/reel_preferences_test.dart` for `ReelPreferences.fromAnswers`
       (data-model.md ReelPreferences.motivationTypes, .formats, .tone, .messengers, .themes, .goal,
       .avoidFlags, .avoidLanguages): each rule, "Không chắc" = empty, unknown ids ignored, legacy
       reasons kept when q1–q4 are unanswered and counted first when only q3/q4 are answered.
-- [ ] T006 Create `lib/data/models/reel_preferences.dart`; add `quizAnswers` and the `preferences`
+- [x] T006 Create `lib/data/models/reel_preferences.dart`; add `quizAnswers` and the `preferences`
       getter to `lib/data/models/user_profile.dart` (data-model.md UserProfile.quizAnswers,
       UserProfile.preferences); old profile maps still load (SC-003). T005 passes.
-- [ ] T007 Rewrite `lib/data/motivation_quiz.dart` with the 11 questions of design §4 (ids, parts,
+- [x] T007 Rewrite `lib/data/motivation_quiz.dart` with the 11 questions of design §4 (ids, parts,
       choice limits, answer ids and labels per data-model.md Quiz); update
       `test/motivation_quiz_test.dart` (counts, every reason once per reason question, unique ids,
       core = 7, extra = 4).
-- [ ] T008 `ProfileNotifier.saveQuizAnswers(answers, {merge})` in `lib/providers/app_providers.dart`
+- [x] T008 `ProfileNotifier.saveQuizAnswers(answers, {merge})` in `lib/providers/app_providers.dart`
       replaces `updateMotivationTypes`: stores answers (replace or merge) and rewrites
       `motivationTypes` from `ReelPreferences.fromAnswers`; provider tests in
       `test/providers_test.dart`.
 
 ## Phase 3: US1 — the first reel fits me (P1)
 
-- [ ] T009 [P] [US1] Tests in `test/reel_recommender_test.dart`: hard filter, every weight of design
+- [x] T009 [P] [US1] Tests in `test/reel_recommender_test.dart`: hard filter, every weight of design
       §5.3 (data-model.md Score), variety rule §5.4, worked example §5.6, pinned-first and limits
       unchanged.
-- [ ] T010 [US1] Implement the filter, score and variety in `lib/services/reel_recommender.dart`;
+- [x] T010 [US1] Implement the filter, score and variety in `lib/services/reel_recommender.dart`;
       `MotivationScreen` passes the profile preferences. T009 passes.
-- [ ] T011 [US1] Generalise `lib/widgets/quiz_question_view.dart`: takes a `QuizQuestion`, step and
+- [x] T011 [US1] Generalise `lib/widgets/quiz_question_view.dart`: takes a `QuizQuestion`, step and
       total; single choice advances on tap; multi choice toggles up to `maxChoices` with a "Tiếp"
       button; every question has "Không chắc"; answer hints shown under the text.
-- [ ] T012 [US1] `lib/screens/onboarding_screen.dart`: core part pages (7), saved with the profile at
+- [x] T012 [US1] `lib/screens/onboarding_screen.dart`: core part pages (7), saved with the profile at
       the end.
-- [ ] T013 [US1] Widget tests: onboarding walks the 7 core questions (single tap, multi + Tiếp,
+- [x] T013 [US1] Widget tests: onboarding walks the 7 core questions (single tap, multi + Tiếp,
       Không chắc) and saves answers and reasons (`test/widget_test.dart`).
 
 ## Phase 4: US2 — retake and extend from Cài đặt (P2)
 
-- [ ] T014 [US2] `lib/screens/quiz_screen.dart` takes a part (all / extra): "Làm lại quiz động lực"
+- [x] T014 [US2] `lib/screens/quiz_screen.dart` takes a part (all / extra): "Làm lại quiz động lực"
       asks 11 questions and replaces answers; "Giúp app hiểu bạn hơn" asks the extra 4 and merges.
       Route `AppRoutes.quiz` with `?part=extra`.
-- [ ] T015 [US2] `lib/screens/settings_screen.dart`: profile summary (reasons, formats, tone) and the
+- [x] T015 [US2] `lib/screens/settings_screen.dart`: profile summary (reasons, formats, tone) and the
       "Giúp app hiểu bạn hơn" entry; widget tests for both entries.
 
 ## Phase 5: US3 — measure per format (P3)

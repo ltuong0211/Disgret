@@ -9,8 +9,8 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../data/mascot_mood.dart';
-import '../data/models/motivation_type.dart';
 import '../data/models/user_profile.dart';
+import '../data/models/reel_preferences.dart';
 import '../data/motivation_quiz.dart';
 import '../data/repositories/blocked_apps_repository.dart';
 import '../l10n/app_strings.dart';
@@ -60,7 +60,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
 
   /// 5.1 Tên gọi (spec 007); replaying the introduction starts from the current name.
   final _name = TextEditingController();
-  final List<MotivationType?> _answers = List.filled(motivationQuestions.length, null);
+
+  /// 1.1 Core quiz answers (spec 015): question id → answer ids, saved with the profile at the end.
+  final QuizAnswers _answers = {};
 
   /// Turns a story page by itself; it fills the current progress segment.
   late final AnimationController _storyClock = AnimationController(
@@ -102,7 +104,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       // Gret has just said hello: it asks the student's name first (spec 007).
       const _Page(_PageKind.name),
       const _Page(_PageKind.reelLength),
-      for (var i = 0; i < motivationQuestions.length; i++) _Page(_PageKind.quiz, i),
+      for (var i = 0; i < coreQuestions.length; i++) _Page(_PageKind.quiz, i),
       // Reminders when a distracting app opens only exist on Android (spec 003 FR-011a).
       if (ref.read(nativeBridgeProvider).isSupported) const _Page(_PageKind.apps),
       if (_needsFirstGoal) const _Page(_PageKind.goal),
@@ -166,9 +168,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     _syncStoryClock();
   }
 
-  void _selectAnswer(MotivationType type) {
+  void _selectAnswer(List<String> answerIds) {
     if (_saving) return;
-    _answers[_page.index] = type;
+    _answers[coreQuestions[_page.index].id] = answerIds;
     _goNext();
   }
 
@@ -202,7 +204,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         .read(profileProvider.notifier)
         .completeOnboarding(
           UserProfile(
-            motivationTypes: topMotivationTypes(_answers.nonNulls.toList()),
+            motivationTypes: ReelPreferences.fromAnswers(_answers).motivationTypes,
+            quizAnswers: Map.of(_answers),
             preferredReelLength: _reelLength,
             // Xem lại onboarding không được tắt chế độ demo đang bật.
             demoMode: ref.read(profileProvider)?.demoMode ?? false,
@@ -300,9 +303,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         _PageKind.name => _buildName(),
         _PageKind.reelLength => _buildReelLength(),
         _PageKind.quiz => QuizQuestionView(
-          questionIndex: _page.index,
-          selected: _answers[_page.index],
-          onSelected: _selectAnswer,
+          question: coreQuestions[_page.index],
+          step: _page.index,
+          total: coreQuestions.length,
+          selected: _answers[coreQuestions[_page.index].id] ?? const [],
+          onAnswered: _selectAnswer,
         ),
         _PageKind.apps => _buildApps(context),
         _PageKind.goal => _buildFirstGoal(context),

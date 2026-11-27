@@ -11,8 +11,8 @@ import '../data/mock_data.dart';
 import '../data/models/goal.dart';
 import '../data/models/habit.dart';
 import '../data/models/habit_log.dart';
-import '../data/models/motivation_type.dart';
 import '../data/models/reel.dart';
+import '../data/models/reel_preferences.dart';
 import '../data/models/session.dart';
 import '../data/models/user_profile.dart';
 import '../data/repositories/blocked_apps_repository.dart';
@@ -71,9 +71,15 @@ class ProfileNotifier extends Notifier<UserProfile?> {
     state = profile;
   }
 
-  /// Làm lại quiz: chỉ đổi động lực, giữ nguyên các lựa chọn khác trong hồ sơ.
-  Future<void> updateMotivationTypes(List<MotivationType> types) =>
-      _save(_currentOrDefault.copyWith(motivationTypes: types));
+  /// 1.1 Quiz answers from Cài đặt (spec 015 FR-012): a full retake replaces the stored answers,
+  /// the extra part is [merge]d into them. The reasons are recomputed from the result; the other
+  /// choices in the profile stay.
+  Future<void> saveQuizAnswers(QuizAnswers answers, {bool merge = false}) {
+    final current = _currentOrDefault;
+    final next = merge ? {...current.quizAnswers, ...answers} : Map.of(answers);
+    final preferences = ReelPreferences.fromAnswers(next, legacyTypes: current.motivationTypes);
+    return _save(current.copyWith(motivationTypes: preferences.motivationTypes, quizAnswers: next));
+  }
 
   /// Bật hoặc tắt chế độ demo trong Cài đặt.
   Future<void> setDemoMode(bool enabled) => _save(_currentOrDefault.copyWith(demoMode: enabled));

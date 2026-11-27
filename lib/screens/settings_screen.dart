@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../data/models/reel_labels.dart';
+import '../data/models/reel_preferences.dart';
 import '../data/models/user_profile.dart';
 import '../l10n/app_strings.dart';
 import '../providers/app_providers.dart';
@@ -56,6 +58,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final profile = ref.watch(profileProvider);
+    final preferences = profile?.preferences ?? ReelPreferences.none;
     final native = ref.read(nativeBridgeProvider);
 
     return Scaffold(
@@ -77,21 +80,34 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: AppSpacing.lg),
           Text('Động lực của bạn', style: theme.textTheme.titleMedium),
           const SizedBox(height: AppSpacing.sm),
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: [
-              for (final type in profile?.motivationTypes ?? const [])
-                Chip(label: Text(type.label)),
-            ],
+          // 1.1 Profile summary (spec 015 FR-007): reasons, liked formats and tone.
+          _ProfileChips(
+            label: AppStrings.profileReasons,
+            values: [for (final type in profile?.motivationTypes ?? const []) type.label],
           ),
-          // 1.1 Làm lại quiz để đổi hồ sơ động lực.
+          if (preferences.formats.isNotEmpty)
+            _ProfileChips(
+              label: AppStrings.profileFormats,
+              values: [for (final format in preferences.formats.take(2)) format.label],
+            ),
+          if (preferences.tone != VideoTone.unknown)
+            _ProfileChips(label: AppStrings.profileTone, values: [preferences.tone.label]),
+          // 1.1 Làm lại quiz để đổi hồ sơ động lực; phần phụ giúp app hiểu thêm.
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
               icon: const Icon(AppIcons.replay),
-              label: const Text('Làm lại quiz động lực'),
+              label: const Text(AppStrings.quizRetake),
               onPressed: () => context.push(AppRoutes.quiz),
+            ),
+          ),
+          Card(
+            child: ListTile(
+              leading: const Icon(AppIcons.quizScenario),
+              title: const Text(AppStrings.quizExtra),
+              subtitle: const Text(AppStrings.quizExtraSubtitle),
+              trailing: const Icon(AppIcons.next),
+              onTap: () => context.push(AppRoutes.quizExtra),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -184,6 +200,37 @@ class SettingsScreen extends ConsumerWidget {
 
 /// 5.1 Tên gọi (spec 007): returns the typed name on "Lưu", null on "Hủy". Owns its text controller
 /// so it lives as long as the dialog, closing animation included.
+/// One line of the profile summary: a small label and the values as chips.
+class _ProfileChips extends StatelessWidget {
+  const _ProfileChips({required this.label, required this.values});
+
+  final String label;
+  final List<String> values;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [for (final value in values) Chip(label: Text(value))],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _NameDialog extends StatefulWidget {
   const _NameDialog({required this.initial});
 

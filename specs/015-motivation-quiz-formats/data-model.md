@@ -58,7 +58,7 @@ means "Không chắc". Unknown question or answer ids are ignored on read.
 | Field | Type | Rule |
 |---|---|---|
 | motivationTypes | List<MotivationType> | `topMotivationTypes` over q1..q4 answers in question order; if none of q1..q4 is answered, `legacyTypes` |
-| formats | List<VideoFormat> (0–2) | q5 answers +2 per format, q8 +1; keep the 2 highest; ties: first seen |
+| formatScores | Map<VideoFormat, int> | q5 answers +2 per format, q8 +1; `formats` lists them highest first (ties: first seen) |
 | tone | VideoTone | q7; else q8's tone; else unknown |
 | messengers | List<Messenger> (0–2) | q6 |
 | themes | Set<ReelTheme> | union of q9 answers' themes |
@@ -77,7 +77,7 @@ means "Không chắc". Unknown question or answer ids are ignored on read.
 ## Score (pure, `ReelRecommender`)
 
 Hard filter: drop a reel whose flags meet `avoidFlags` or whose language is in `avoidLanguages`.
-Score (design §5.3): +3 per reason match (max 2), +2 per theme match (max 2), +2/+1 first/second
+Score (design §5.3): +3 per reason match (max 2), +2 per theme match (max 2), +2/+1 favourite/liked
 format, +2 tone, +1 messenger, +1 goal, +2 context bonus (`distracted` and theme `digitalDetox`
 or `startSmall`), +1 not watched in 24 h, −3 last watched. Variety (§5.4) when filling slot 2+.
 Pinned-first, `limitFor(context)` and catalogue order for ties unchanged.

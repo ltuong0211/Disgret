@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:focus_app/data/models/event.dart';
 import 'package:focus_app/data/models/motivation_type.dart';
 import 'package:focus_app/data/models/reel.dart';
+import 'package:focus_app/data/models/reel_labels.dart';
+import 'package:focus_app/data/models/reel_preferences.dart';
 import 'package:focus_app/data/models/user_profile.dart';
 import 'package:focus_app/services/reel_recommender.dart';
 
@@ -63,22 +65,22 @@ void main() {
       expect(score(reel, types: [MotivationType.family]), 1);
     });
 
-    test('Mỗi tag trùng được 2 điểm', () {
-      expect(score(reel, types: [MotivationType.money]), 3);
-      expect(score(reel, types: [MotivationType.money, MotivationType.career]), 5);
+    test('Mỗi tag trùng được 3 điểm (spec 015)', () {
+      expect(score(reel, types: [MotivationType.money]), 4);
+      expect(score(reel, types: [MotivationType.money, MotivationType.career]), 7);
     });
 
     test('Đã xem trong 24 giờ thì mất điểm cộng', () {
-      expect(score(reel, types: [MotivationType.money], recent: {'a'}), 2);
+      expect(score(reel, types: [MotivationType.money], recent: {'a'}), 3);
     });
 
-    test('Vừa xem gần nhất thì bị trừ 2 điểm, có thể ra số âm', () {
+    test('Vừa xem gần nhất thì bị trừ 3 điểm, có thể ra số âm', () {
       expect(score(reel, types: [MotivationType.money], recent: {'a'}, last: 'a'), 0);
-      expect(score(reel, recent: {'a'}, last: 'a'), -2);
+      expect(score(reel, recent: {'a'}, last: 'a'), -3);
     });
 
     test('Vừa xem gần nhất nhưng đã quá 24 giờ thì vẫn được điểm cộng', () {
-      expect(score(reel, last: 'a'), -1);
+      expect(score(reel, last: 'a'), -2);
     });
   });
 
@@ -378,6 +380,223 @@ void main() {
     test('Hồ sơ gia đình: kho hiện không có reel tag gia đình nhưng vẫn có reel để xem', () {
       final profile = _profile([MotivationType.family]);
       expect(recommender.recommend(profile, ReelContext.start, const [], now: _now), hasLength(3));
+    });
+  });
+
+  group('Spec 015: labels, filter and variety (quiz-and-tags-design.md §5)', () {
+    Reel labelled(
+      String id, {
+      List<MotivationType> tags = const [],
+      VideoFormat format = VideoFormat.other,
+      VideoTone tone = VideoTone.unknown,
+      Messenger messenger = Messenger.none,
+      List<ReelTheme> themes = const [],
+      List<StudyGoal> goals = const [],
+      ReelLanguage language = ReelLanguage.vi,
+      List<ReelFlag> flags = const [],
+      List<String> context = const [ReelContext.start],
+    }) => Reel(
+      id: id,
+      assetPath: '$id.mp4',
+      title: id,
+      tags: tags,
+      lengthSec: 20,
+      context: context,
+      format: format,
+      tone: tone,
+      messenger: messenger,
+      themes: themes,
+      goals: goals,
+      language: language,
+      flags: flags,
+    );
+
+    UserProfile withAnswers(QuizAnswers answers) => UserProfile(
+      motivationTypes: ReelPreferences.fromAnswers(answers).motivationTypes,
+      preferredReelLength: 30,
+      quizAnswers: answers,
+    );
+
+    // The user of the worked example (§5.6).
+    final example = withAnswers(const {
+      'q1': ['q1.prove'],
+      'q2': ['q2.career'],
+      'q5': ['q5.journey', 'q5.interview'],
+      'q7': ['q7.emotional'],
+      'q9': ['q9.giveUp'],
+      'q10': ['q10.language'],
+      'q11': ['q11.loud'],
+    });
+
+    int scoreFor(Reel reel, UserProfile profile, {String context = ReelContext.start}) =>
+        ReelRecommender.score(
+          reel,
+          motivationTypes: profile.motivationTypes,
+          recentlyWatchedIds: const {},
+          lastWatchedId: null,
+          preferences: profile.preferences,
+          context: context,
+        );
+
+    final r7 = labelled(
+      'r7',
+      tags: [MotivationType.proveYourself, MotivationType.growth],
+      format: VideoFormat.journey,
+      tone: VideoTone.emotional,
+      messenger: Messenger.peer,
+      themes: [ReelTheme.consistency, ReelTheme.comeback],
+      goals: [StudyGoal.language],
+    );
+    final r1 = labelled(
+      'r1',
+      tags: [MotivationType.proveYourself, MotivationType.career],
+      format: VideoFormat.interview,
+      tone: VideoTone.toughLove,
+      themes: [ReelTheme.fearCourage],
+    );
+    final loud = labelled(
+      'rX',
+      tags: [MotivationType.proveYourself, MotivationType.career],
+      format: VideoFormat.edit,
+      tone: VideoTone.hype,
+      flags: [ReelFlag.loud],
+    );
+
+    test('worked example §5.6: r7 = 13, r1 = 9', () {
+      expect(scoreFor(r7, example), 13);
+      expect(scoreFor(r1, example), 9);
+    });
+
+    test('worked example §5.6: the loud reel is filtered, playlist r7 then r1', () {
+      final recommender = ReelRecommender([loud, r1, r7]);
+      expect(_ids(recommender.recommend(example, ReelContext.start, const [], now: _now)), [
+        'r7',
+        'r1',
+      ]);
+    });
+
+    test('avoided language and pinned reels with an avoided flag are never shown', () {
+      final profile = withAnswers(const {
+        'q11': ['q11.en', 'q11.sad'],
+      });
+      final recommender = ReelRecommender([
+        labelled('english', language: ReelLanguage.en),
+        labelled('subtitled', language: ReelLanguage.enSub),
+        Reel(
+          id: 'pinnedSad',
+          assetPath: 'p.mp4',
+          title: 'p',
+          tags: const [],
+          lengthSec: 10,
+          context: const [ReelContext.start],
+          pinFirst: const [ReelContext.start],
+          flags: const [ReelFlag.sad],
+        ),
+      ]);
+      expect(_ids(recommender.recommend(profile, ReelContext.start, const [], now: _now)), [
+        'subtitled',
+      ]);
+    });
+
+    test('each weight of §5.3 on its own', () {
+      final base = withAnswers(const {});
+      final plain = labelled('p');
+      expect(scoreFor(plain, base), 1, reason: 'only "not watched in 24 h"');
+
+      final themed = withAnswers(const {
+        'q9': ['q9.giveUp'],
+      });
+      final threeThemes = labelled(
+        't',
+        themes: [ReelTheme.consistency, ReelTheme.discipline, ReelTheme.comeback],
+      );
+      expect(scoreFor(threeThemes, themed), 1 + 4, reason: 'at most 2 themes count');
+
+      final toned = withAnswers(const {
+        'q7': ['q7.calm'],
+      });
+      expect(scoreFor(labelled('c', tone: VideoTone.calm), toned), 1 + 2);
+      expect(scoreFor(labelled('u'), toned), 1, reason: 'unknown tone never matches');
+
+      final voiced = withAnswers(const {
+        'q6': ['q6.peer'],
+      });
+      expect(scoreFor(labelled('m', messenger: Messenger.peer), voiced), 1 + 1);
+
+      final goal = withAnswers(const {
+        'q10': ['q10.exam'],
+      });
+      expect(scoreFor(labelled('g', goals: [StudyGoal.exam]), goal), 1 + 1);
+      expect(scoreFor(labelled('g2'), goal), 1, reason: 'a reel without goals gets nothing');
+
+      final formats = withAnswers(const {
+        'q5': ['q5.story'],
+        'q8': ['q8.edit'],
+      });
+      expect(scoreFor(labelled('f1', format: VideoFormat.story), formats), 1 + 2);
+      expect(scoreFor(labelled('f2', format: VideoFormat.edit), formats), 1 + 1);
+    });
+
+    test('after a distraction, digitalDetox and startSmall get the context bonus', () {
+      final base = withAnswers(const {});
+      final detox = labelled('d', themes: [ReelTheme.digitalDetox]);
+      expect(scoreFor(detox, base, context: ReelContext.distracted), 1 + 2);
+      expect(scoreFor(detox, base), 1);
+    });
+
+    test('variety §5.4: the next slot takes a new format if at most 2 points behind', () {
+      final profile = withAnswers(const {
+        'q5': ['q5.edit'],
+        'q1': ['q1.money'],
+      });
+      final recommender = ReelRecommender([
+        labelled('edit1', format: VideoFormat.edit, tags: [MotivationType.money]),
+        labelled('edit2', format: VideoFormat.edit, tags: [MotivationType.money]),
+        labelled('story', format: VideoFormat.story, tags: [MotivationType.money]),
+        labelled('tips', format: VideoFormat.tips),
+      ]);
+      // edit1 = edit2 = 1 + 3 + 2 = 6, story = 4, tips = 1.
+      expect(_ids(recommender.recommend(profile, ReelContext.start, const [], now: _now)), [
+        'edit1',
+        'story',
+        'edit2',
+      ]);
+    });
+
+    test('variety §5.4: a new format more than 2 points behind does not jump ahead', () {
+      final profile = withAnswers(const {
+        'q5': ['q5.edit'],
+        'q1': ['q1.money'],
+      });
+      final recommender = ReelRecommender([
+        labelled('edit1', format: VideoFormat.edit, tags: [MotivationType.money]),
+        labelled('edit2', format: VideoFormat.edit, tags: [MotivationType.money]),
+        labelled('tips', format: VideoFormat.tips),
+      ]);
+      expect(_ids(recommender.recommend(profile, ReelContext.start, const [], now: _now)), [
+        'edit1',
+        'edit2',
+        'tips',
+      ]);
+    });
+
+    test('without answers: reasons first, then a new format before a repeated one', () {
+      final recommender = ReelRecommender([
+        labelled('a', format: VideoFormat.edit),
+        labelled('b', format: VideoFormat.edit, tags: [MotivationType.family]),
+        labelled('c', format: VideoFormat.story),
+      ]);
+      expect(
+        _ids(
+          recommender.recommend(
+            _profile([MotivationType.family]),
+            ReelContext.start,
+            const [],
+            now: _now,
+          ),
+        ),
+        ['b', 'c', 'a'],
+      );
     });
   });
 }

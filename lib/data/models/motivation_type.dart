@@ -5,7 +5,10 @@ enum MotivationType {
   family('Gia đình'),
   career('Sự nghiệp'),
   proveYourself('Chứng minh bản thân'),
-  freedom('Tự do');
+  freedom('Tự do'),
+  // Spec 015: reasons for students who are not moved by external rewards.
+  growth('Hiểu biết'),
+  contribution('Giúp ích người khác');
 
   const MotivationType(this.label);
 

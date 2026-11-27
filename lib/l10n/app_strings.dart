@@ -218,6 +218,20 @@ class AppStrings {
   static const String enterApp = 'Vào DisGret';
   static String quizStep(int number, int total) => 'Câu $number/$total';
 
+  // ---------- Quiz (spec 015) ----------
+  static const String quizNext = 'Tiếp';
+  static String quizChooseUpTo(int max, int count) =>
+      max >= count ? 'Chọn tất cả những gì đúng với bạn' : 'Chọn tối đa $max';
+  static const String quizRetake = 'Làm lại quiz động lực';
+  static const String quizRetakeTitle = 'Quiz động lực';
+  static const String quizExtra = 'Giúp app hiểu bạn hơn';
+  static const String quizExtraSubtitle = '4 câu, khoảng 40 giây, để reel hợp với bạn hơn';
+  static const String profileReasons = 'Động lực chính';
+  static const String profileFormats = 'Dạng video bạn thích';
+  static const String profileTone = 'Kiểu cú hích';
+  static String quizSaved(String reasons) => 'Động lực chính của bạn: $reasons';
+  static const String quizExtraSaved = 'Đã cập nhật hồ sơ, reel sẽ hợp với bạn hơn';
+
   // ---------- 5.4 Góc của Gret (feature 004) ----------
   static const String cornerTitle = 'Góc của Gret';
   static const String cornerOpen = 'Mở Góc của Gret';
