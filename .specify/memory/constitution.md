@@ -1,3 +1,31 @@
+<!--
+Sync Impact Report (2026-11-27) — STATUS: PROPOSED, awaiting project-lead approval
+- Version change: 1.0.0 → 2.0.0 (MAJOR: Principle II redefined; accounts and one backend become
+  allowed under limits that did not exist before).
+- Modified principles:
+  - II. Local-Only Privacy → II. Local-First Privacy with Minimal Accounts
+  - IV. Layered Simplicity: network calls are added to the one-way layering rule (MINOR-level
+    wording expansion carried by this MAJOR bump).
+  - VII. Agent Collaboration: backend config files join the never-commit list.
+- Added sections: none (rules live inside Principle II and the Platform section).
+- Removed sections: none.
+- Platform and Technology Constraints: stack line gains "one ADR-approved auth/sync backend".
+- Dependent files needing an update once approved (not edited by this proposal):
+  - ⚠ AGENTS.md — "Stack" bullet ("No backend, accounts, Firebase, analytics or network calls")
+    and "Security and privacy" bullets ("No network requests…").
+  - ⚠ docs/decisions/0001-brownfield-stack-android-local-only.md — mark partly superseded by
+    ADR-0013.
+  - ⚠ docs/architecture/data-model.md — add the account/sync section.
+  - ⚠ android/app/src/main/AndroidManifest.xml — INTERNET comment still says google_fonts.
+  - ✅ .specify/templates/plan-template.md — Constitution Check reads principles at runtime; no
+    change needed.
+- Deferred TODOs:
+  - TODO(APPROVAL): the lead approves or rejects this amendment (and ADR-0013) in chat; on
+    approval set "Ratified/Last Amended", delete this report and update the files above.
+  - Resolved 2026-11-27 (spec 016 clarify): no age gate; notice advises under-16s to ask a
+    parent. The lead accepted this knowingly; see ADR-0013 "Risks".
+-->
+
 # DisGret Constitution
 
 ## Core Principles
@@ -16,18 +44,39 @@
 Rationale: the product exists to help students start and return to studying; anything that
 rewards browsing works against the goal and weakens the hypotheses being tested.
 
-### II. Local-Only Privacy
+### II. Local-First Privacy with Minimal Accounts
 
-- All user data MUST stay on the device (Hive). The MVP MUST NOT add a backend, accounts, cloud
-  sync, remote analytics, crash reporting or advertising SDKs.
-- The app MUST NOT make network requests at runtime. Fonts and videos are bundled.
-- Recorded events MUST NOT contain personal identifiers. The list of installed apps and the
-  blocked-app list never leave the device.
-- Any future data export MUST be an explicit user action and MUST produce anonymised data.
+- Hive on the device is the source of truth. The app MUST stay fully usable without an account
+  and without a network connection; signing in is optional and never blocks studying.
+- Exactly one auth/sync backend MAY be used, chosen in an ADR (ADR-0013) that names the provider,
+  the data region and every synced field. Adding a second backend or a new synced field needs an
+  ADR update first.
+- Network requests are allowed only to that backend and only for sign-up, sign-in, sign-out,
+  password reset, account deletion and syncing the fields the ADR lists. Fonts and videos stay
+  bundled.
+- Data minimisation: an account holds only a sign-in identifier (the email) plus the synced
+  study data. The app MUST NOT ask for or store a real name, birth date, school,
+  class, phone number, photo or location. The optional display name (ADR-0012) syncs only if the
+  ADR lists it. The app MUST NOT store a user's age.
+- No tracking: no remote analytics, telemetry, crash reporting, advertising or attribution SDKs,
+  and no advertising identifier. Backend usage logs that the provider keeps by default are the
+  only logs allowed; data is never sold, shared or used for profiling.
+- The list of installed apps and the blocked-app list never leave the device. Recorded events
+  MUST NOT contain personal identifiers and leave the device only if the ADR lists them.
+- Users may be under 18. Before an account is created the app MUST show a Vietnamese privacy
+  notice that lists every piece of data leaving the phone, where it is stored and how to delete
+  it, and advises students under 16 to ask a parent first. Any age gate or parental-consent step
+  is decided in the feature spec and its ADR (spec 016: none).
+- "Xoá tài khoản" in the app MUST delete the account and all of its cloud data without contacting
+  anyone; local data stays unless the user also chooses to delete it. Signing out MUST NOT leave
+  the previous account's data readable by the next account on the same device.
+- Any data export MUST be an explicit user action and MUST produce anonymised data.
 - A new Android permission MUST be justified in an ADR before it is added to the manifest.
 
-Rationale: users include high-school students, many under 18; collecting nothing is the
-simplest defensible privacy position.
+Rationale: users include high-school students, many under 18. Accounts let a student keep their
+habits across phones, but every extra field is a liability; collecting the least possible,
+keeping the app offline-first and letting users delete everything themselves is the simplest
+defensible position that still allows accounts.
 
 ### III. Data Integrity and Backward Compatibility
 
@@ -48,6 +97,8 @@ loss would invalidate both.
   Widgets MUST NOT read Hive boxes or call the MethodChannel directly.
 - Every native call goes through `lib/services/native_bridge.dart` and MUST be safe on web
   (no-op or default value).
+- Every backend call goes through one auth service and one sync service under `lib/services/`;
+  screens, widgets and repositories MUST NOT call the backend SDK directly.
 - Colours, fonts, radii and spacing come only from `lib/theme/app_theme.dart` (Kotlin screens use
   `android/app/src/main/res/values/colors.xml`). New or modified screens take their text from
   `lib/l10n/app_strings.dart` (ADR-0005).
@@ -100,7 +151,9 @@ reasoning traceable.
   bridge), an agent MUST check its dependents (Graphify graph or code search) and confirm findings
   in the source files. Generated graphs are aids, not authority.
 - An agent works only within the current task's scope; any edit outside it is reported explicitly.
-- Secrets, keystores and personal data MUST NOT be committed. History on `master` MUST NOT be
+- Secrets, keystores, backend config files (for example `google-services.json`, API keys,
+  service-account files) and personal data MUST NOT be committed. Agents MUST NOT create cloud
+  projects or accounts; the project lead creates them and supplies config out of band. History on `master` MUST NOT be
   rewritten or force-pushed.
 
 Rationale: several agents acting on one repository need one rulebook and a habit of checking
@@ -111,7 +164,7 @@ impact before touching shared code.
 - Target: Android only (ADR-0001). Web is used only for fast UI iteration; iOS and desktop are
   unsupported.
 - Stack: Flutter, Dart, Riverpod 3, go_router, Material 3, Hive; Kotlin native layer over the
-  `focus/native` MethodChannel.
+  `focus/native` MethodChannel; one ADR-approved auth/sync backend (Principle II).
 - UI text is Vietnamese. Code, comments for new code, specs, ADRs, `AGENTS.md` and commit messages
   are in English. Existing Vietnamese comments may stay.
 - Formatting width is 100 (`analysis_options.yaml`); lints come from `flutter_lints`.
@@ -141,4 +194,5 @@ impact before touching shared code.
   block implementation.
 - The project lead (repository owner) approves amendments.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-22 | **Last Amended**: 2026-11-22
+**Version**: 2.0.0 (Proposed, not in force until the project lead approves; 1.0.0 applies until
+then) | **Ratified**: 2026-11-22 | **Last Amended**: TODO(APPROVAL): date of approval
