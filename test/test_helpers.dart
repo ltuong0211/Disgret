@@ -11,6 +11,7 @@ import 'package:focus_app/data/hive_boxes.dart';
 import 'package:focus_app/data/models/habit.dart';
 import 'package:focus_app/data/models/reel.dart';
 import 'package:focus_app/data/reminder_plan.dart';
+import 'package:focus_app/data/study_check_plan.dart';
 import 'package:focus_app/data/repositories/reel_repository.dart';
 import 'package:focus_app/providers/app_providers.dart';
 import 'package:focus_app/providers/focus_session_provider.dart';
@@ -279,7 +280,15 @@ class FakeNativeBridge extends NativeBridge {
   void Function(NativeAction action)? _onAction;
 
   /// Giả lập phần Kotlin gửi một hành động sang Flutter.
-  void emit(String action, {int? minutes}) => _onAction!(NativeAction(action, minutes: minutes));
+  void emit(String action, {int? minutes, String? habitId}) =>
+      _onAction!(NativeAction(action, minutes: minutes, habitId: habitId));
+
+  /// 2.2 Each scheduleStudyChecks call (spec 023): the checks and the blocked list.
+  final List<(List<StudyCheck>, Set<String>)> studyChecks = [];
+
+  @override
+  Future<void> scheduleStudyChecks(List<StudyCheck> checks, Set<String> blockedPackages) async =>
+      studyChecks.add((checks, blockedPackages));
 
   @override
   void listenForActions(void Function(NativeAction action) onAction) {

@@ -81,6 +81,14 @@ class NativeChannel(
                 result.success(null)
             }
 
+            // 2.2 Nhắc giờ học có chặn app (spec 023)
+            "scheduleStudyChecks" -> {
+                val checks = call.argument<List<Map<String, Any?>>>("checks").orEmpty()
+                val blocked = call.argument<List<String>>("blocked").orEmpty()
+                StudyChecks.schedule(activity, checks, blocked)
+                result.success(null)
+            }
+
             // 8.2 Hàng đợi sự kiện
             "drainEvents" -> result.success(EventQueue.drain(activity))
 

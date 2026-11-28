@@ -74,3 +74,5 @@ id of one is added to `corner_owned` when it is first chosen, so it stays chosen
 - Guided tour (feature 022): profile key `tour_pending` (bool, missing → false) — a tour waits to be
   shown on Hôm nay. Set when onboarding finishes or from "Xem lại hướng dẫn"; phone-only (not on
   the ADR-0013 allow-list).
+- Habit `reminderInterrupt` (feature 023): bool, missing → false; at the reminder time a blocked app
+  on screen is covered by Gret (Android only). Synced with the habit record.

@@ -343,6 +343,10 @@ class FocusGuardService : Service() {
         @Volatile
         private var instance: FocusGuardService? = null
 
+        /** A study session is being guarded (the scheduled check of spec 023 then stays quiet). */
+        val isRunning: Boolean
+            get() = instance != null
+
         /** Bật service, hoặc cập nhật danh sách chặn nếu đang chạy. Trả về false nếu không bật được. */
         fun start(context: Context, blockedPackages: List<String>, timeScale: Int): Boolean {
             if (!AppPermissions.canGuard(context)) return false

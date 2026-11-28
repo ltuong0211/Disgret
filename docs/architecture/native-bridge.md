@@ -47,3 +47,13 @@ MainActivity đọc extra `native_action` trong cả onCreate và onNewIntent, c
 - Đang nghỉ thì không chặn app nào. Hết giờ mà còn ở trong app bị chặn thì màn chặn hiện lại ngay. Chế độ demo: đồng hồ phiên và giờ nghỉ chạy nhanh gấp 3 lần (1 phút = 20 giây, hằng số FocusSessionTimer.demoTimeScale), thời gian chờ ở màn chặn thì không. Không tăng lên 6 lần: thời gian ở ngoài app vẫn bị trừ vào phiên, nên phiên "Bắt đầu 5 phút" phải đủ 100 giây cho 3 lần chặn (chờ 10 + 15 + 20 giây) trong kịch bản demo ở README.md.
 - "Thử màn can thiệp" không ghi sự kiện, không tăng thời gian chờ, không bắt đầu giờ nghỉ thật.
 - Các file Kotlin: NativeChannel (nhận lời gọi), NativeActions (gửi hành động lên Flutter), EventQueue (8.2), AppPermissions (7.1), InstalledApps (2.1), FocusGuardService (7.2, 2.2, 2.4), InterventionActivity (2.3), MainActivity (mở kênh, đọc hành động trong Intent, dừng service khi Activity mất đi), DisplayRate (xin tần số quét cao nhất của màn hình, 90/120 Hz nếu có, cho MainActivity và InterventionActivity).
+
+## 2.2 Reminder-time check (spec 023, ADR-0014)
+
+| Direction | Name | Payload |
+|---|---|---|
+| Flutter → Kotlin | `scheduleStudyChecks` | `{checks: [{habitId, habitName, minutes, atMillis}], blocked: [package]}`; replaces all |
+| Kotlin → Flutter | `onNativeAction` `start_scheduled` | `{action, habitId}` from "Bắt đầu học ngay" |
+
+Kotlin: `StudyChecks.kt` (alarms, foreground check, snoozes), `StudyCheckReceiver`,
+`InterventionActivity.openScheduled`. No-op on web.

@@ -7,6 +7,8 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../data/study_check_plan.dart';
+
 /// 2.1 Một app cài trên máy.
 class InstalledApp {
   const InstalledApp({required this.packageName, required this.name, required this.icon});
@@ -32,7 +34,7 @@ class InstalledApp {
 }
 
 class NativeAction {
-  const NativeAction(this.name, {this.minutes});
+  const NativeAction(this.name, {this.minutes, this.habitId});
 
   static const String interventionShown = 'intervention_shown';
   static const String resumeFocus = 'resume_focus';
@@ -40,8 +42,12 @@ class NativeAction {
   static const String breakStarted = 'break_started';
   static const String breakEnded = 'break_ended';
 
+  /// 2.2 "Bắt đầu học ngay" on the scheduled interruption (spec 023); carries [habitId].
+  static const String startScheduled = 'start_scheduled';
+
   final String name;
   final int? minutes;
+  final String? habitId;
 }
 
 class GuardPermissions {
@@ -87,7 +93,13 @@ class NativeBridge {
     _channel.setMethodCallHandler((call) async {
       if (call.method != 'onNativeAction') return;
       final arguments = call.arguments as Map<Object?, Object?>;
-      onAction(NativeAction(arguments['action']! as String, minutes: arguments['minutes'] as int?));
+      onAction(
+        NativeAction(
+          arguments['action']! as String,
+          minutes: arguments['minutes'] as int?,
+          habitId: arguments['habitId'] as String?,
+        ),
+      );
     });
     _invoke<void>('nativeReady');
   }
@@ -137,6 +149,17 @@ class NativeBridge {
 
   Future<void> showIntervention(String appName) =>
       _invoke<void>('showIntervention', {'appName': appName});
+
+  // ---------- 2.2 Nhắc giờ học có chặn app (spec 023) ----------
+
+  /// Replaces every scheduled check. At each check's time, Android covers a blocked app that is on
+  /// screen; without Usage access or "display over other apps" nothing happens (the notification
+  /// of spec 009 still comes).
+  Future<void> scheduleStudyChecks(List<StudyCheck> checks, Set<String> blockedPackages) =>
+      _invoke<void>('scheduleStudyChecks', {
+        'checks': [for (final check in checks) check.toMap()],
+        'blocked': blockedPackages.toList(),
+      });
 
   // ---------- 8.2 Hàng đợi sự kiện ----------
 

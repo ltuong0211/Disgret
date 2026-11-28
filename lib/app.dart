@@ -10,6 +10,7 @@ import 'data/models/reel.dart';
 import 'providers/account_providers.dart';
 import 'providers/app_providers.dart';
 import 'data/reminder_plan.dart';
+import 'data/study_check_plan.dart';
 import 'providers/focus_session_provider.dart';
 import 'providers/gret_corner_providers.dart';
 import 'providers/gret_emote_provider.dart';
@@ -69,11 +70,18 @@ class _DisGretAppState extends ConsumerState<DisGretApp> {
   Future<void> _applyReminders(List<PlannedReminder> plan) async {
     final service = ref.read(reminderServiceProvider);
     await service.replaceAll(plan);
+    _applyStudyChecks(plan);
     final settings = ref.read(reminderSettingsRepositoryProvider);
     if (plan.isNotEmpty && !settings.permissionAsked) {
       await settings.markPermissionAsked();
       await service.requestPermission();
     }
+  }
+
+  /// 2.2 Spec 023: the reminders that also cover a distracting app open at that time.
+  void _applyStudyChecks(List<PlannedReminder> plan) {
+    final checks = StudyCheckPlan.from(plan, ref.read(habitsProvider));
+    ref.read(nativeBridgeProvider).scheduleStudyChecks(checks, ref.read(blockedAppsProvider));
   }
 
   Future<void> _saveNativeEvents() async {
@@ -105,6 +113,16 @@ class _DisGretAppState extends ConsumerState<DisGretApp> {
       case NativeAction.breakEnded:
         notifier.onBreakEnded();
         if (phase == FocusPhase.running) router.go(AppRoutes.focus);
+      case NativeAction.startScheduled:
+        // "Bắt đầu học ngay" on the scheduled interruption (spec 023): that habit, its minutes,
+        // through the one way into a session (motivation step, ADR-0002).
+        if (phase == FocusPhase.running) {
+          router.go(AppRoutes.focus);
+        } else {
+          ref.read(sessionPlanOverrideProvider.notifier).chooseHabit(action.habitId);
+          router.go(AppRoutes.today);
+          router.push(AppRoutes.motivationFor(ReelContext.start));
+        }
     }
   }
 
@@ -156,6 +174,8 @@ class _DisGretAppState extends ConsumerState<DisGretApp> {
   Widget build(BuildContext context) {
     ref.listen(focusSessionProvider, _onSessionChanged);
     ref.listen(reminderPlanProvider, (_, plan) => _applyReminders(plan));
+    // The checks need the current blocked-app list (spec 023).
+    ref.listen(blockedAppsProvider, (_, _) => _applyStudyChecks(ref.read(reminderPlanProvider)));
 
     return MaterialApp.router(
       title: 'DisGret',

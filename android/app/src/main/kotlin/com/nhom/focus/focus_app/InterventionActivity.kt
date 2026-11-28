@@ -27,6 +27,14 @@ class InterventionActivity : Activity() {
     private val isTrial: Boolean
         get() = intent.getBooleanExtra(EXTRA_IS_TRIAL, false)
 
+    /**
+     * 2.2 Spec 023: opened at a habit's reminder time over a blocked app, outside a session.
+     * The same screen, other words and choices: start that habit now, "Để 10 phút nữa", or go on
+     * into the app after the 5-second wait. No Reset-break event is recorded.
+     */
+    private val isScheduled: Boolean
+        get() = intent.getStringExtra(StudyChecks.EXTRA_HABIT_ID) != null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         isShowing = true
@@ -41,7 +49,7 @@ class InterventionActivity : Activity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             onBackInvokedDispatcher.registerOnBackInvokedCallback(
                 OnBackInvokedDispatcher.PRIORITY_DEFAULT,
-            ) { returnToStudy() }
+            ) { onBackChoice() }
         }
     }
 
@@ -54,7 +62,12 @@ class InterventionActivity : Activity() {
 
     @Deprecated("Chỉ còn dùng cho Android 12 trở xuống")
     override fun onBackPressed() {
-        returnToStudy()
+        onBackChoice()
+    }
+
+    /** Back means "study", as on the Reset-break screen. */
+    private fun onBackChoice() {
+        if (isScheduled) startScheduledHabit() else returnToStudy()
     }
 
     /**
@@ -65,14 +78,18 @@ class InterventionActivity : Activity() {
         val appName = intent.getStringExtra(EXTRA_APP_NAME).orEmpty()
         val waitSeconds = intent.getIntExtra(EXTRA_WAIT_SECONDS, FocusGuardService.FIRST_WAIT_SECONDS)
         findViewById<TextView>(R.id.intervention_app_name).text = appName
-        findViewById<TextView>(R.id.intervention_question).text =
-            getString(R.string.intervention_question, appName)
-
-        val lines = resources.getStringArray(R.array.intervention_gret_lines)
-        val block = (waitSeconds - FocusGuardService.FIRST_WAIT_SECONDS) /
-            FocusGuardService.WAIT_STEP_SECONDS
-        findViewById<TextView>(R.id.intervention_gret_line).text =
-            lines[block.coerceIn(0, lines.size - 1)]
+        if (isScheduled) {
+            showScheduledWords(appName)
+        } else {
+            findViewById<TextView>(R.id.intervention_question).text =
+                getString(R.string.intervention_question, appName)
+            val lines = resources.getStringArray(R.array.intervention_gret_lines)
+            val block = (waitSeconds - FocusGuardService.FIRST_WAIT_SECONDS) /
+                FocusGuardService.WAIT_STEP_SECONDS
+            findViewById<TextView>(R.id.intervention_gret_line).text =
+                lines[block.coerceIn(0, lines.size - 1)]
+            showSessionChoiceLabels()
+        }
 
         val breathText = findViewById<TextView>(R.id.intervention_breath)
         breathText.setText(R.string.intervention_breathe)
@@ -91,9 +108,59 @@ class InterventionActivity : Activity() {
     }
 
     private fun setUpChoices() {
-        findViewById<Button>(R.id.intervention_back_button).setOnClickListener { returnToStudy() }
-        findViewById<Button>(R.id.intervention_reel_button).setOnClickListener { watchReel() }
-        findViewById<Button>(R.id.intervention_break_button).setOnClickListener { showBreakOptions() }
+        findViewById<Button>(R.id.intervention_back_button).setOnClickListener { onBackChoice() }
+        findViewById<Button>(R.id.intervention_reel_button).setOnClickListener {
+            if (isScheduled) snoozeScheduled() else watchReel()
+        }
+        findViewById<Button>(R.id.intervention_break_button).setOnClickListener {
+            if (isScheduled) finish() else showBreakOptions()
+        }
+    }
+
+    // ---------- 2.2 Spec 023: at the reminder time ----------
+
+    private fun showScheduledWords(appName: String) {
+        val habitName = intent.getStringExtra(StudyChecks.EXTRA_HABIT_NAME).orEmpty()
+        val minutes = intent.getIntExtra(StudyChecks.EXTRA_MINUTES, 0)
+        findViewById<TextView>(R.id.intervention_question).text =
+            getString(R.string.scheduled_question, habitName, appName)
+        findViewById<TextView>(R.id.intervention_gret_line).text =
+            getString(R.string.scheduled_gret_line, minutes)
+        findViewById<Button>(R.id.intervention_back_button).setText(R.string.scheduled_start_now)
+        val snooze = findViewById<Button>(R.id.intervention_reel_button)
+        snooze.setText(R.string.scheduled_snooze)
+        val habitId = intent.getStringExtra(StudyChecks.EXTRA_HABIT_ID).orEmpty()
+        snooze.visibility =
+            if (StudyChecks.snoozesLeft(this, habitId) > 0) View.VISIBLE else View.GONE
+        findViewById<Button>(R.id.intervention_break_button).text =
+            getString(R.string.scheduled_continue, appName)
+    }
+
+    /** The screen is reused (singleInstance): a Reset-break opening needs its own labels back. */
+    private fun showSessionChoiceLabels() {
+        findViewById<Button>(R.id.intervention_back_button).setText(R.string.intervention_back_to_study)
+        findViewById<Button>(R.id.intervention_reel_button).apply {
+            setText(R.string.intervention_watch_reel)
+            visibility = View.VISIBLE
+        }
+        findViewById<Button>(R.id.intervention_break_button).setText(R.string.intervention_take_break)
+    }
+
+    /** Opens DisGret on the motivation step for that habit (one way into a session, ADR-0002). */
+    private fun startScheduledHabit() {
+        val habitId = intent.getStringExtra(StudyChecks.EXTRA_HABIT_ID)
+        startActivity(MainActivity.openIntent(this, NativeActions.START_SCHEDULED, habitId))
+        finish()
+    }
+
+    private fun snoozeScheduled() {
+        val habitId = intent.getStringExtra(StudyChecks.EXTRA_HABIT_ID).orEmpty()
+        val habitName = intent.getStringExtra(StudyChecks.EXTRA_HABIT_NAME).orEmpty()
+        val minutes = intent.getIntExtra(StudyChecks.EXTRA_MINUTES, 0)
+        if (StudyChecks.snooze(this, habitId, habitName, minutes)) {
+            Toast.makeText(this, R.string.scheduled_snoozed, Toast.LENGTH_SHORT).show()
+        }
+        finish()
     }
 
     private fun setUpBreakOptions() {
@@ -183,7 +250,7 @@ class InterventionActivity : Activity() {
         // Covered rather than closed by a choice: the blocked app opened a screen of its own over
         // this one while starting (YouTube does ~6 s after a cold start), or Home / screen off.
         // FocusGuardService then treats a block of the same app within 5 s as the same opening.
-        if (!isFinishing && !isTrial) coveredAt = SystemClock.elapsedRealtime()
+        if (!isFinishing && !isTrial && !isScheduled) coveredAt = SystemClock.elapsedRealtime()
         // Người dùng bấm Home hoặc tắt màn hình: màn này xong việc. Lần mở app sau sẽ có màn mới
         // với đếm ngược từ đầu, không để một màn cũ nằm chờ ở phía sau.
         finish()
@@ -215,6 +282,23 @@ class InterventionActivity : Activity() {
         fun open(context: Context, appName: String, waitSeconds: Int) {
             context.startActivity(intentFor(context, appName, waitSeconds))
         }
+
+        /** 2.2 Spec 023: at a habit's reminder time, over a blocked app; 5 seconds before choices. */
+        fun openScheduled(
+            context: Context,
+            appName: String,
+            habitId: String,
+            habitName: String,
+            minutes: Int,
+        ) {
+            val intent = intentFor(context, appName, SCHEDULED_WAIT_SECONDS)
+                .putExtra(StudyChecks.EXTRA_HABIT_ID, habitId)
+                .putExtra(StudyChecks.EXTRA_HABIT_NAME, habitName)
+                .putExtra(StudyChecks.EXTRA_MINUTES, minutes)
+            context.startActivity(intent)
+        }
+
+        private const val SCHEDULED_WAIT_SECONDS = 5
 
         /** Nút "Thử màn can thiệp" trong Cài đặt. */
         fun openTrial(context: Context, appName: String) {

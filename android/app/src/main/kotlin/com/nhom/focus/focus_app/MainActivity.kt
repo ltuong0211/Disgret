@@ -52,27 +52,32 @@ class MainActivity : FlutterActivity() {
     /** Chuyển hành động trong Intent sang Flutter. Xoá sau khi đọc để không bị xử lý hai lần. */
     private fun forwardAction(intent: Intent) {
         val action = intent.getStringExtra(EXTRA_ACTION) ?: return
+        val habitId = intent.getStringExtra(EXTRA_HABIT_ID)
         intent.removeExtra(EXTRA_ACTION)
+        intent.removeExtra(EXTRA_HABIT_ID)
         // MainActivity mở được từ app khác nên chỉ nhận đúng các hành động của DisGret.
-        if (action in ACTIONS_FROM_INTENT) NativeActions.send(action)
+        if (action in ACTIONS_FROM_INTENT) NativeActions.send(action, habitId = habitId)
     }
 
     companion object {
         private const val EXTRA_ACTION = "native_action"
+        private const val EXTRA_HABIT_ID = "native_habit_id"
         private val ACTIONS_FROM_INTENT = setOf(
             NativeActions.RESUME_FOCUS,
             NativeActions.OPEN_REELS_DISTRACTED,
             NativeActions.BREAK_ENDED,
+            NativeActions.START_SCHEDULED,
         )
 
         /**
          * Intent đưa DisGret lên trước, có thể kèm hành động cho Flutter.
          * App đang chạy thì dùng lại màn cũ, không tạo thêm.
          */
-        fun openIntent(context: Context, action: String? = null): Intent {
+        fun openIntent(context: Context, action: String? = null, habitId: String? = null): Intent {
             val intent = Intent(context, MainActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             if (action != null) intent.putExtra(EXTRA_ACTION, action)
+            if (habitId != null) intent.putExtra(EXTRA_HABIT_ID, habitId)
             return intent
         }
     }

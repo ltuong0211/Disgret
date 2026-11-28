@@ -186,6 +186,11 @@ class AppStrings {
   static String reminderBody(String habit, int minutes) =>
       'Tới giờ $habit rồi, chỉ $minutes phút thôi. Mình bắt đầu nhé?';
   static const String reminderChannel = 'Nhắc giờ học';
+
+  /// Spec 023: at the reminder time, a distracting app on screen is covered.
+  static const String reminderInterruptTitle = 'Chặn app gây xao nhãng khi tới giờ';
+  static const String reminderInterruptHint =
+      'Nếu lúc đó bạn đang mở TikTok, YouTube… Gret sẽ hỏi bạn có chắc muốn vào app không.';
   static const String reminderChannelDescription =
       'Gret nhắc bạn vào giờ học đã đặt cho thói quen.';
 

@@ -214,6 +214,9 @@ Cài đặt → **Ứng dụng cần nhắc**. Muốn xem trước màn can thi�
    khoảng 2 phút sau → **Lưu**. Lần đầu có lời nhắc, Android hỏi quyền thông báo → **Cho phép**.
    Đúng giờ (có thể trễ vài phút) Gret báo "Gret đang đợi bạn 🐟 – Tới giờ … rồi"; chạm vào để mở
    DisGret. Đã làm xong thói quen hôm nay thì hôm nay không nhắc nữa (ADR-0006).
+   Bật thêm **Chặn app gây xao nhãng khi tới giờ** (spec 023): đúng giờ mà đang mở YouTube thì Gret
+   che lên "Tới giờ … rồi! Bạn có chắc muốn vào YouTube không?", thở 5 giây rồi cho chọn **Bắt đầu
+   học ngay** / **Để 10 phút nữa** / **Vẫn vào YouTube**.
 13. **Tiến độ.** Tab **Tiến độ** → đoạn **Phiên học**: biểu đồ phút tập trung 7 ngày, tỉ lệ lựa
    chọn trên màn can thiệp, tỉ lệ reel dẫn tới bắt đầu học, thời gian quay lại trung bình (dữ liệu
    mẫu cộng với lượt demo vừa xong).

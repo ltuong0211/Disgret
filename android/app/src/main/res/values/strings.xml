@@ -32,4 +32,11 @@
     <string name="intervention_break_minutes">%1$d phút</string>
     <string name="intervention_break_cancel">Thôi, chọn lại</string>
     <string name="intervention_trial_break">Đây là bản thử nên chưa tính giờ nghỉ</string>
+    <!-- 2.2 Spec 023: at a habit's reminder time, over a distracting app. -->
+    <string name="scheduled_question">Tới giờ %1$s rồi! Bạn có chắc muốn vào %2$s không?</string>
+    <string name="scheduled_gret_line">Chỉ %1$d phút thôi, mình bắt đầu nhé? 🐟</string>
+    <string name="scheduled_start_now">Bắt đầu học ngay</string>
+    <string name="scheduled_snooze">Để 10 phút nữa</string>
+    <string name="scheduled_continue">Vẫn vào %1$s</string>
+    <string name="scheduled_snoozed">Gret sẽ nhắc lại sau 10 phút</string>
 </resources>

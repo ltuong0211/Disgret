@@ -16,6 +16,9 @@ object NativeActions {
     const val BREAK_STARTED = "break_started"
     const val BREAK_ENDED = "break_ended"
 
+    /** 2.2 "Bắt đầu học ngay" on the scheduled interruption (spec 023); carries the habit id. */
+    const val START_SCHEDULED = "start_scheduled"
+
     private const val METHOD = "onNativeAction"
 
     private val mainThread = Handler(Looper.getMainLooper())
@@ -24,10 +27,11 @@ object NativeActions {
     private var readyChannel: MethodChannel? = null
     private val pending = mutableListOf<Map<String, Any>>()
 
-    fun send(action: String, minutes: Int? = null) {
+    fun send(action: String, minutes: Int? = null, habitId: String? = null) {
         val message = buildMap {
             put("action", action)
             if (minutes != null) put("minutes", minutes)
+            if (habitId != null) put("habitId", habitId)
         }
         runOnMainThread {
             val channel = readyChannel

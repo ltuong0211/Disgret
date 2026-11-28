@@ -71,6 +71,8 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- 2.2 Spec 023 (ADR-0014): at a reminder time, covers a blocked app that is on screen. -->
+        <receiver android:exported="false" android:name=".StudyCheckReceiver" />
         <!-- 2.2 Nhắc giờ học: receivers of flutter_local_notifications for scheduled reminders. -->
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">

@@ -39,6 +39,7 @@ class Habit {
     this.endAfterDays = defaultEndAfterDays,
     this.reminderEnabled = false,
     this.reminderTime = defaultReminderTime,
+    this.reminderInterrupt = false,
     this.sortOrder = 0,
     this.startDate,
     this.dueDate,
@@ -102,6 +103,10 @@ class Habit {
   /// Giờ nhắc dạng "HH:mm".
   final String reminderTime;
 
+  /// 2.2 At [reminderTime], cover a distracting app that is open with "Tới giờ học rồi" (spec
+  /// 023). Habits saved before spec 023 read as off.
+  final bool reminderInterrupt;
+
   /// Thứ tự hiển thị; bằng nhau thì giữ thứ tự trong Hive.
   final int sortOrder;
 
@@ -147,6 +152,7 @@ class Habit {
     endAfterDays: endAfterDays,
     reminderEnabled: reminderEnabled,
     reminderTime: reminderTime,
+    reminderInterrupt: reminderInterrupt,
     sortOrder: sortOrder ?? this.sortOrder,
     startDate: startDate,
     dueDate: dueDate,
@@ -174,6 +180,7 @@ class Habit {
     'endAfterDays': endAfterDays,
     'reminderEnabled': reminderEnabled,
     'reminderTime': reminderTime,
+    'reminderInterrupt': reminderInterrupt,
     'sortOrder': sortOrder,
     'startDate': startDate == null ? null : dateKey(startDate!),
     'dueDate': dueDate == null ? null : dateKey(dueDate!),
@@ -202,6 +209,7 @@ class Habit {
     endAfterDays: map['endAfterDays'] as int? ?? defaultEndAfterDays,
     reminderEnabled: map['reminderEnabled'] as bool? ?? false,
     reminderTime: map['reminderTime'] as String? ?? defaultReminderTime,
+    reminderInterrupt: map['reminderInterrupt'] as bool? ?? false,
     sortOrder: map['sortOrder'] as int? ?? 0,
     startDate: _date(map['startDate']),
     dueDate: _date(map['dueDate']),

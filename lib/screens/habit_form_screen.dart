@@ -13,6 +13,7 @@ import '../data/date_utils.dart';
 import '../data/habit_icon_catalog.dart';
 import '../data/models/goal.dart';
 import '../data/models/habit.dart';
+import '../l10n/app_strings.dart';
 import '../providers/app_providers.dart';
 import '../theme/app_theme.dart';
 import '../widgets/habit_form_fields.dart';
@@ -54,6 +55,9 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
   late DateTime _endDate;
   late int _endAfterDays;
   late bool _reminderEnabled;
+
+  /// 2.2 Spec 023: cover a distracting app at the reminder time. New habits start with it on.
+  late bool _reminderInterrupt;
   late TimeOfDay _reminderTime;
   late DateTime _dueDate;
 
@@ -89,6 +93,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
     _endDate = habit?.endDate ?? addDays(today, 30);
     _endAfterDays = habit?.endAfterDays ?? Habit.defaultEndAfterDays;
     _reminderEnabled = habit?.reminderEnabled ?? false;
+    _reminderInterrupt = habit?.reminderInterrupt ?? true;
     _reminderTime = _parseTime(habit?.reminderTime ?? Habit.defaultReminderTime);
     _dueDate = habit?.dueDate ?? today;
 
@@ -185,6 +190,7 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
       endAfterDays: _endAfterDays,
       reminderEnabled: _reminderEnabled,
       reminderTime: _formatTime(_reminderTime),
+      reminderInterrupt: _reminderInterrupt,
       sortOrder: existing?.sortOrder ?? 0,
       startDate: existing?.startDate,
       dueDate: _isOneTime ? _dueDate : null,
@@ -387,6 +393,16 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
                                         'Gret sẽ nhắc bạn vào giờ này, những ngày có lịch.',
                                         style: theme.textTheme.bodySmall,
                                       ),
+                                      // 2.2 Spec 023: only Android can cover another app.
+                                      if (ref.read(nativeBridgeProvider).isSupported)
+                                        SwitchListTile(
+                                          contentPadding: EdgeInsets.zero,
+                                          title: const Text(AppStrings.reminderInterruptTitle),
+                                          subtitle: const Text(AppStrings.reminderInterruptHint),
+                                          value: _reminderInterrupt,
+                                          onChanged: (value) =>
+                                              setState(() => _reminderInterrupt = value),
+                                        ),
                                     ],
                                   )
                                 : null,
