@@ -41,3 +41,24 @@
   - Reset break: số intervention_shown, tỉ lệ chose_study / chose_reel / chose_break trên tổng số lần đã chọn. Chỉ tính lựa chọn trên màn can thiệp, không tính sheet nhắc trong app (3.3).
   - Reels: số reel_watched và tỉ lệ có startedFocus ("Bắt đầu học ngay sau khi xem"). Thời gian quay lại: trung bình awaySeconds của session_distracted.
 - "Tạo dữ liệu mẫu" (lib/data/mock_data.dart) dùng id cố định nên bấm nhiều lần không trùng. 1 mục tiêu có câu bản sắc, 7 thói quen đủ 7 màu, đủ Sáng/Chiều/Tối (và 1 thói quen "lúc nào cũng được"), có hằng tuần theo thứ (Chạy bộ T2, T4, T6), hằng tuần theo số ngày (Thiền 5 ngày/tuần) và 1 việc một lần hạn hôm nay; lịch sử 120 ngày có ngày bỏ, bỏ qua (skip), bản 2 phút, nghỉ phép (các ngày nghỉ phép cách nhau ≥ 7 ngày để luôn khác tuần dù hôm nay là thứ mấy); "Ôn bài" đủ 66 ngày (đủ 4 huy hiệu), "Đọc sách" bỏ hôm qua để hiện lời nhắc. sortOrder của thói quen mẫu bắt đầu từ 1 để thói quen tạo lúc onboarding (sortOrder 0) đứng đầu và được Focus chọn sẵn. Ngày thứ 6 trước hôm nay không thói quen nào được làm nên streak chung là 5. Hôm nay để trống (chỉ có "Làm bài tập" 10/30 phút) để demo xong một phiên thì streak tăng từ 5 lên 6. Có 5 phiên học, 8 lượt xem reel, 6 lần chặn kèm lựa chọn, 7 lần xao nhãng; mọi lượt xem reel mẫu đều cũ hơn 24 giờ để không làm lệch thứ tự đề xuất lúc demo.
+
+## Accounts and sync (feature 016, ADR-0013)
+
+- Optional. Without Firebase settings in the build (`--dart-define-from-file=firebase.env.json`)
+  nothing below is used and the app never goes online.
+- New Hive boxes: `account` (`owner_uid`, `email`, `last_pulled_at` server ms, `last_sync_ok_at`
+  device ms) and `sync_meta` (`"<box>/<key>"` → `updatedAt`, `deleted`, `dirty`). Models are
+  unchanged; every repository write is journaled in `sync_meta` (`SyncJournal`).
+- What syncs (allow-list, `SyncScope` in `lib/data/sync_merge.dart`): every record of `goals`,
+  `habits`, `habit_logs`, `sessions`; profile keys `onboarding_done`, `celebrated_level`,
+  `study_place`, `corner_owned`, `corner_worn`, `corner_sea`, `corner_mascot`; inside `user` only
+  `motivationTypes`, `preferredReelLength`, `quizAnswers`.
+- Never synced: `displayName` (ADR-0012), `demoMode`, `events`, `blocked_packages`,
+  `reminder_permission_asked`, installed apps, and any field or key added later until ADR-0013
+  lists it.
+- Remote: Firestore `users/{uid}/records/{box}__{key}` (`box`, `key`, `data`, `updatedAt`,
+  `deleted`, `syncedAt`). Merge: later `updatedAt` wins, on a tie a deletion wins; pulls start
+  60 s before `last_pulled_at`. Tombstones keep their time after the push.
+- Sign-out (`HiveBoxes.clearAccountData`) clears every box and profile key except
+  `blocked_packages` and `reminder_permission_asked`. "Xoá tài khoản" deletes the online records
+  and the account; local data stays as guest data unless the user ticks the checkbox.

@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <!-- 5.2 google_fonts tải font Be Vietnam Pro qua mạng ở lần chạy đầu.
-         Bản debug tự có quyền này, bản release thì phải khai báo. -->
+    <!-- 6.3 Optional online accounts (spec 016, ADR-0013): Firebase Auth + Firestore only, and
+         only when the build carries the Firebase settings. Fonts are bundled (spec 011). -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <!-- 7.1 Quyền cho Reset break. Hai quyền đầu người dùng phải tự bật trong Cài đặt của máy. -->

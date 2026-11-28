@@ -227,9 +227,9 @@ holds. Before editing a shared file, run `graphify explain "<Symbol>"` and
 
 ## Phase 10: Polish and cross-cutting
 
-- [ ] T039 [P] Add "6.3 Tài khoản và đồng bộ" to the README decomposition map and a short demo
+- [x] T039 [P] Add "6.3 Tài khoản và đồng bộ" to the README decomposition map and a short demo
       note (sign up from sample data, sign in on a second emulator) in `README.md`.
-- [ ] T040 [P] Add an English "Accounts and sync (feature 016)" section to
+- [x] T040 [P] Add an English "Accounts and sync (feature 016)" section to
       `docs/architecture/data-model.md` (boxes `account`, `sync_meta`, synced keys table from
       research.md R6, events stay local).
 - [x] T041 [P] Grep check: no `firebase_` import outside `lib/services/firebase_auth_service.dart`,

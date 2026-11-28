@@ -62,7 +62,8 @@ technical decisions behind `plan.md`.
 ## R5. Merge rules
 
 - **Decision** (`SyncMerge.resolve`): for the same `box/key`, the entry with the larger
-  `updatedAt` wins; on a tie, `deleted` wins, then remote wins. A losing local entry that is not
+  `updatedAt` wins; on a tie, `deleted` wins; an identical version (our own push coming back) is
+  skipped, and a still-dirty local copy is kept. A losing local entry that is not
   dirty is overwritten; a winning dirty local entry is pushed. Logs and sessions have unique ids
   (habit logs: `<type>_<habitId>_<date>`), so records from two phones are all kept (FR-016).
 - **Rationale**: last-write-wins per record is the simplest rule a student can explain; data loss

@@ -11,6 +11,9 @@
    values into `firebase.env.json` at the repo root (git-ignored), using
    `firebase.env.example.json` as the template:
    `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_PROJECT_ID`, `FIREBASE_MESSAGING_SENDER_ID`.
+   Shortcut: `flutterfire configure` registers the app and writes `lib/firebase_options.dart`;
+   copy the `android` values (apiKey, appId, projectId, messagingSenderId) from it. That file and
+   `android/app/google-services.json` are git-ignored and not used by the app.
 5. Two Android emulators (Pixel, API 34+), A and B.
 
 ## Automated checks

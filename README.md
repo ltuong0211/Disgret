@@ -87,6 +87,11 @@ flutter build apk --release      # tạo build/app/outputs/flutter-apk/app-relea
 - APK release đang ký bằng khoá debug: đủ để cài lên máy ảo hay máy thật để demo, chưa đưa lên
   cửa hàng được.
 - Phông Baloo 2 (tiêu đề) và Nunito (nội dung) nằm sẵn trong `assets/fonts/` nên không cần mạng.
+- Tài khoản online (spec 016) là tuỳ chọn. Chạy `flutter run` bình thường thì app không có mục
+  Tài khoản và không gọi mạng. Muốn bật: chép `firebase.env.example.json` thành
+  `firebase.env.json` (không commit), điền 4 giá trị của Firebase project, rồi chạy
+  `flutter run --dart-define-from-file=firebase.env.json`. Chi tiết:
+  `specs/016-online-accounts/quickstart.md`.
 - Đổi logo: sửa `assets/branding/logo.svg` (app vẽ trực tiếp file này), xuất lại 3 file PNG trong
   `assets/launcher/` (từ logo.svg và logo_free.svg, bản không nền cho icon và màn khởi động),
   rồi chạy `dart run flutter_launcher_icons` và `dart run flutter_native_splash:create`. Xem
@@ -201,6 +206,11 @@ Cài đặt → **Ứng dụng cần nhắc**. Muốn xem trước màn can thi�
 13. **Tiến độ.** Tab **Tiến độ** → đoạn **Phiên học**: biểu đồ phút tập trung 7 ngày, tỉ lệ lựa
    chọn trên màn can thiệp, tỉ lệ reel dẫn tới bắt đầu học, thời gian quay lại trung bình (dữ liệu
    mẫu cộng với lượt demo vừa xong).
+14. **Tài khoản (khi build có Firebase).** **Cài đặt** → **Tài khoản** → **Tạo tài khoản**: đọc
+   thông báo quyền riêng tư → **Tôi đã đọc và đồng ý** → email + mật khẩu. Dữ liệu đang có trên
+   máy được lưu lên tài khoản. Trên máy ảo thứ hai: màn giới thiệu → **Đã có tài khoản? Đăng
+   nhập** → cùng tài khoản: thói quen và chuỗi ngày hiện lại. **Đăng xuất** xoá dữ liệu của tài
+   khoản khỏi máy; tên gọi, danh sách app cần nhắc và lịch sử Reset break không bao giờ rời máy.
 
 ## Mã sơ đồ phân rã → file code
 
@@ -230,6 +240,7 @@ Mỗi file ghi mã thành phần ở dòng đầu. `kotlin/` là
 | 5.5 | Bản đồ biển: mỗi mục tiêu một đảo, mỗi thói quen một điểm khám phá, toàn màn hình | `lib/data/sea_map.dart`, `lib/providers/sea_map_providers.dart`, `lib/widgets/sea/sea_world.dart`, `lib/screens/sea_map_screen.dart`, `lib/screens/habits_screen.dart` |
 | 5.6 | Quán San Hô: học cùng các bạn biển của Gret, chọn nơi học | `lib/data/sea_cafe.dart`, `lib/data/study_place.dart`, `lib/data/repositories/study_place_repository.dart`, `lib/providers/sea_cafe_providers.dart`, `lib/widgets/cafe/`, `lib/widgets/session_plan_sheet.dart`, `lib/screens/focus_screen.dart`, `assets/mascot/turtle/`, `assets/mascot/starfish/` |
 | 6.2 | Mô hình dữ liệu, lưu trữ Hive | `lib/data/models/`, `lib/data/repositories/`, `lib/data/hive_boxes.dart`, `lib/data/date_utils.dart`, `lib/data/mock_data.dart` |
+| 6.3 | Tài khoản và đồng bộ (không bắt buộc, spec 016, ADR-0013) | `lib/data/sync_merge.dart`, `lib/data/sync_journal.dart`, `lib/data/repositories/account_repository.dart`, `lib/services/sync_engine.dart`, `lib/services/auth_service.dart`, `lib/services/remote_store.dart`, `lib/services/firebase_auth_service.dart`, `lib/services/firestore_remote_store.dart`, `lib/services/accounts_config.dart`, `lib/providers/account_providers.dart`, `lib/screens/account_screen.dart`, `lib/screens/sign_in_screen.dart`, `lib/screens/sign_up_screen.dart`, `lib/screens/forgot_password_screen.dart`, `firestore.rules` |
 | 7.1 | Quyền | `lib/screens/reset_break_permissions_screen.dart`, `lib/widgets/reset_break_sheet.dart`, `kotlin/AppPermissions.kt` |
 | 7.2 | Dịch vụ theo dõi app, cầu nối Kotlin | `kotlin/FocusGuardService.kt`, `kotlin/NativeChannel.kt`, `kotlin/NativeActions.kt`, `lib/services/native_bridge.dart` |
 | 8.2 | Nhật ký sự kiện, thống kê phiên học (trong Tiến độ) | `lib/data/repositories/event_repository.dart`, `kotlin/EventQueue.kt`, `lib/services/focus_stats.dart`, `lib/screens/stats_screen.dart` (`StatsView`) |
