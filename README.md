@@ -137,13 +137,17 @@ Cài đặt → **Ứng dụng cần nhắc**. Muốn xem trước màn can thi�
 ### Trên lớp
 
 1. **Onboarding.** Mở DisGret → màn chờ: Gret bơi qua nền xanh kèm bong bóng, "Đang lặn xuống
-   biển…" (khoảng 1,4 giây) → 4 trang story Gret kể về app (tự lật sau 4 giây, chạm phải/trái
-   để sang/lùi, **Bỏ qua** để vào thẳng câu hỏi) → Gret hỏi tên gọi, nhập "Khôi" (để trống cũng
+   biển…" (khoảng 1,4 giây) → Gret hỏi tên gọi ngay trang đầu, nhập "Khôi" (để trống cũng
    được) → **Tiếp tục** → chọn độ dài reel → **Tiếp tục** → trả lời 4
    câu quiz động lực trong khung suy nghĩ của Gret → chọn app hay kéo mình đi → **Tiếp tục**.
    Ở bước mục tiêu: nhập mục tiêu (ví dụ "Qua môn Tư Duy Tính Toán"), lý do, thói quen "Ôn bài",
    số phút tối thiểu chọn **Tự nhập → 1** → **Vào DisGret**: đầu màn Hôm nay ghi "DisGret" và
    "Chào buổi sáng, Khôi" (đổi tên trong **Cài đặt → Tên gọi**).
+   Ngay sau đó **hướng dẫn lần đầu** (spec 022) chạy trên Hôm nay: mọi thứ mờ đi, chỉ phần đang
+   giới thiệu sáng lên trong khung viền vàng, Gret giải thích trong một thẻ (8 bước: biển, độ trong
+   và chuỗi ngày, lối tắt, việc hôm nay, nút Giữ để bắt đầu, tab Thói quen, tab Tiến độ, Cài đặt).
+   **Tiếp nhé** hoặc chạm ra ngoài để sang bước sau, **Bỏ qua** để tắt. Xem lại trong **Cài đặt →
+   Xem lại hướng dẫn**.
    > Vì sao 1 phút: trong phiên "5 phút" của kịch bản, thời gian ở YouTube và chờ ở màn chặn bị trừ
    > vào thời gian tập trung, nên phiên chỉ còn khoảng 1–2 phút tập trung thật. Mức tối thiểu
    > 1 phút đảm bảo cuối phiên thói quen hoàn thành và streak tăng.
@@ -246,6 +250,7 @@ Mỗi file ghi mã thành phần ở dòng đầu. `kotlin/` là
 | 5.4 | Góc của Gret: ngọc trai, tủ đồ, vùng biển, linh vật | `lib/data/pearls.dart`, `lib/data/gret_corner_catalog.dart`, `lib/data/mascot_species.dart`, `lib/data/repositories/gret_corner_repository.dart`, `lib/providers/gret_corner_providers.dart`, `lib/screens/gret_corner_screen.dart`, `assets/mascot/outfits/`, `assets/mascot/crab/`, `assets/mascot/octopus/` |
 | 5.5 | Bản đồ biển: mỗi mục tiêu một đảo, mỗi thói quen một điểm khám phá, toàn màn hình | `lib/data/sea_map.dart`, `lib/providers/sea_map_providers.dart`, `lib/widgets/sea/sea_world.dart`, `lib/screens/sea_map_screen.dart`, `lib/screens/habits_screen.dart` |
 | 5.6 | Quán San Hô: học cùng các bạn biển của Gret, chọn nơi học | `lib/data/sea_cafe.dart`, `lib/data/study_place.dart`, `lib/data/repositories/study_place_repository.dart`, `lib/providers/sea_cafe_providers.dart`, `lib/widgets/cafe/`, `lib/widgets/session_plan_sheet.dart`, `lib/screens/focus_screen.dart`, `assets/mascot/turtle/`, `assets/mascot/starfish/` |
+| 5.7 | Hướng dẫn lần đầu (spec 022): làm mờ xung quanh, sáng tính năng đang chỉ | `lib/data/guided_tour.dart`, `lib/providers/tour_providers.dart`, `lib/widgets/tour/guided_tour_overlay.dart`, `lib/widgets/tour/tour_keys.dart`, `lib/screens/main_shell.dart` |
 | 6.2 | Mô hình dữ liệu, lưu trữ Hive | `lib/data/models/`, `lib/data/repositories/`, `lib/data/hive_boxes.dart`, `lib/data/date_utils.dart`, `lib/data/mock_data.dart` |
 | 6.3 | Tài khoản và đồng bộ (không bắt buộc, spec 016, ADR-0013) | `lib/data/sync_merge.dart`, `lib/data/sync_journal.dart`, `lib/data/repositories/account_repository.dart`, `lib/services/sync_engine.dart`, `lib/services/auth_service.dart`, `lib/services/remote_store.dart`, `lib/services/firebase_auth_service.dart`, `lib/services/firestore_remote_store.dart`, `lib/services/accounts_config.dart`, `lib/providers/account_providers.dart`, `lib/screens/account_screen.dart`, `lib/screens/sign_in_screen.dart`, `lib/screens/sign_up_screen.dart`, `lib/screens/forgot_password_screen.dart`, `firestore.rules` |
 | 7.1 | Quyền | `lib/screens/reset_break_permissions_screen.dart`, `lib/widgets/reset_break_sheet.dart`, `kotlin/AppPermissions.kt` |

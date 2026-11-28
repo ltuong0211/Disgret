@@ -15,11 +15,11 @@ import '../data/motivation_quiz.dart';
 import '../data/repositories/blocked_apps_repository.dart';
 import '../l10n/app_strings.dart';
 import '../providers/account_providers.dart';
+import '../providers/tour_providers.dart';
 import '../providers/app_providers.dart';
 import '../providers/sea_providers.dart';
 import '../router/app_router.dart';
 import '../theme/app_theme.dart';
-import '../widgets/app_logo.dart';
 import '../widgets/goal_form_fields.dart';
 import '../widgets/gradient_pill_button.dart';
 import '../widgets/habit_form_fields.dart';
@@ -31,14 +31,14 @@ import '../widgets/sticker_chip.dart';
 import '../widgets/sea/sea_scene.dart';
 
 /// What one onboarding page shows.
-enum _PageKind { story, name, reelLength, quiz, apps, goal }
+enum _PageKind { name, reelLength, quiz, apps, goal }
 
 class _Page {
   const _Page(this.kind, [this.index = 0]);
 
   final _PageKind kind;
 
-  /// Story page or quiz question number.
+  /// Quiz question number.
   final int index;
 }
 
@@ -49,8 +49,7 @@ class OnboardingScreen extends ConsumerStatefulWidget {
   ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
-    with SingleTickerProviderStateMixin {
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   static const List<int> _reelLengths = [15, 30, 60];
 
   final _formKey = GlobalKey<FormState>();
@@ -65,12 +64,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   /// 1.1 Core quiz answers (spec 015): question id → answer ids, saved with the profile at the end.
   final QuizAnswers _answers = {};
 
-  /// Turns a story page by itself; it fills the current progress segment.
-  late final AnimationController _storyClock = AnimationController(
-    vsync: this,
-    duration: AppMotion.storyPage,
-  )..addStatusListener(_onStoryClock);
-
   late int _reelLength;
 
   /// The reminder list being edited on the app page; saved only at the end.
@@ -81,7 +74,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   late final List<_Page> _pages;
 
   int _step = 0;
-  bool _held = false;
   bool _animationsOff = false;
   bool _saving = false;
 
@@ -89,9 +81,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   bool _seaReady = false;
 
   _Page get _page => _pages[_step];
-  bool get _isStory => _page.kind == _PageKind.story;
   bool get _isLastPage => _step == _pages.length - 1;
-  int get _firstQuestion => _pages.indexWhere((page) => page.kind != _PageKind.story);
 
   @override
   void initState() {
@@ -100,9 +90,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     _name.text = ref.read(profileProvider)?.displayName ?? '';
     _needsFirstGoal = ref.read(goalsProvider).isEmpty;
     _blockedApps = {...ref.read(blockedAppsProvider)};
+    // The story pages are gone: how the app works is shown on Hôm nay itself by the guided tour
+    // after these questions (spec 022). Gret asks the student's name first (spec 007).
     _pages = [
-      for (var i = 0; i < _StoryPage.count; i++) _Page(_PageKind.story, i),
-      // Gret has just said hello: it asks the student's name first (spec 007).
       const _Page(_PageKind.name),
       const _Page(_PageKind.reelLength),
       for (var i = 0; i < coreQuestions.length; i++) _Page(_PageKind.quiz, i),
@@ -116,12 +106,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _animationsOff = MediaQuery.disableAnimationsOf(context);
-    _syncStoryClock();
   }
 
   @override
   void dispose() {
-    _storyClock.dispose();
     _goalTitle.dispose();
     _goalReason.dispose();
     _habitName.dispose();
@@ -130,25 +118,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     super.dispose();
   }
 
-  /// Story pages turn by themselves, except with "remove animations" on or while held.
-  void _syncStoryClock() {
-    final runs = _isStory && !_held && !_saving && !_animationsOff;
-    if (!runs) {
-      _storyClock.stop();
-    } else if (!_storyClock.isAnimating) {
-      _storyClock.forward();
-    }
-  }
-
-  void _onStoryClock(AnimationStatus status) {
-    if (status == AnimationStatus.completed) _goNext();
-  }
-
-  void _goTo(int step) {
-    setState(() => _step = step);
-    _storyClock.value = 0;
-    _syncStoryClock();
-  }
+  void _goTo(int step) => setState(() => _step = step);
 
   void _goNext() {
     if (_saving) return;
@@ -162,11 +132,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   void _goBack() {
     if (_saving || _step == 0) return;
     _goTo(_step - 1);
-  }
-
-  void _hold(bool held) {
-    _held = held;
-    _syncStoryClock();
   }
 
   void _selectAnswer(List<String> answerIds) {
@@ -183,7 +148,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     if (_saving) return;
     if (_page.kind == _PageKind.goal && !_formKey.currentState!.validate()) return;
     setState(() => _saving = true); // Khoá nút để bấm hai lần không tạo trùng mục tiêu.
-    _syncStoryClock();
 
     if (_needsFirstGoal) {
       final goal = await ref
@@ -213,6 +177,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             displayName: UserProfile.cleanName(_name.text),
           ),
         );
+    // 5.7 How the app works is shown next, on Hôm nay itself (spec 022).
+    await ref.read(guidedTourProvider.notifier).schedule();
     if (!mounted) return;
     if (_needsFirstGoal && !_animationsOff) {
       setState(() => _seaReady = true);
@@ -247,8 +213,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         key: const ValueKey('story-progress'),
                         count: _pages.length,
                         current: _step,
-                        clock: _storyClock,
-                        fillCurrent: !_isStory || _animationsOff,
                       ),
                     ),
                     SizedBox(
@@ -257,38 +221,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
                         child: Align(
                           alignment: Alignment.centerRight,
-                          child: _isStory
+                          // 6.3 A secondary link for students who already have an account
+                          // (spec 016 FR-002), on the first page only.
+                          child: _step == 0 && ref.watch(accountsAvailableProvider)
                               ? TextButton(
-                                  onPressed: () => _goTo(_firstQuestion),
-                                  child: const Text(AppStrings.storySkip),
+                                  onPressed: () => context.push(AppRoutes.accountSignIn),
+                                  child: const Text(AppStrings.accountHaveAccount),
                                 )
                               : null,
                         ),
                       ),
                     ),
-                    Expanded(child: _isStory ? _buildStory() : _buildQuestion(context)),
+                    Expanded(child: _buildQuestion(context)),
                     Padding(padding: const EdgeInsets.all(AppSpacing.lg), child: _buildButtons()),
                   ],
                 ),
-        ),
-      ),
-    );
-  }
-
-  /// Tap the right two thirds for the next page, the left third for the previous one; hold to
-  /// pause.
-  Widget _buildStory() {
-    return LayoutBuilder(
-      builder: (context, constraints) => GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapUp: (details) =>
-            details.localPosition.dx < constraints.maxWidth / 3 ? _goBack() : _goNext(),
-        onLongPressStart: (_) => _hold(true),
-        onLongPressEnd: (_) => _hold(false),
-        onLongPressCancel: () => _hold(false),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          child: _StoryPage(index: _page.index),
         ),
       ),
     );
@@ -312,7 +259,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         ),
         _PageKind.apps => _buildApps(context),
         _PageKind.goal => _buildFirstGoal(context),
-        _PageKind.story => const SizedBox.shrink(),
       },
     );
   }
@@ -430,31 +376,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   }
 
   Widget _buildButtons() {
-    if (_isStory) {
-      final next = GradientPillButton(label: AppStrings.continueLabel, onPressed: _goNext);
-      // 6.3 A secondary link for students who already have an account (spec 016 FR-002).
-      if (_step != 0 || !ref.watch(accountsAvailableProvider)) return next;
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          next,
-          TextButton(
-            onPressed: () => context.push(AppRoutes.accountSignIn),
-            child: const Text(AppStrings.accountHaveAccount),
-          ),
-        ],
-      );
-    }
-
     // Ở trang quiz, chọn thẻ là tự sang câu tiếp nên không cần nút đi tiếp.
     final nextLabel = switch (_page.kind) {
-      _PageKind.quiz || _PageKind.story => null,
+      _PageKind.quiz => null,
       _PageKind.goal => AppStrings.enterApp,
       _ => _isLastPage ? AppStrings.enterApp : AppStrings.continueLabel,
     };
     return Row(
       children: [
-        OutlinedButton(onPressed: _saving ? null : _goBack, child: const Text(AppStrings.back)),
+        if (_step > 0)
+          OutlinedButton(onPressed: _saving ? null : _goBack, child: const Text(AppStrings.back)),
         if (nextLabel != null) ...[
           const SizedBox(width: AppSpacing.sm),
           Expanded(
@@ -470,22 +401,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   }
 }
 
-/// One segment per page; past pages full, the current story page filling with [clock].
+/// One segment per page; the current and past pages are full.
 class _StoryProgress extends StatelessWidget {
-  const _StoryProgress({
-    required this.count,
-    required this.current,
-    required this.clock,
-    required this.fillCurrent,
-    super.key,
-  });
+  const _StoryProgress({required this.count, required this.current, super.key});
 
   final int count;
   final int current;
-  final Animation<double> clock;
-
-  /// Question pages (and story pages without animations) show their segment full.
-  final bool fillCurrent;
 
   @override
   Widget build(BuildContext context) {
@@ -494,113 +415,23 @@ class _StoryProgress extends StatelessWidget {
     return Semantics(
       label: AppStrings.storyProgress(current + 1, count),
       child: ExcludeSemantics(
-        child: AnimatedBuilder(
-          animation: clock,
-          builder: (context, _) => Row(
-            children: [
-              for (var i = 0; i < count; i++) ...[
-                if (i > 0) const SizedBox(width: AppStory.segmentGap),
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: AppRadius.pillBorder,
-                    child: Container(
-                      height: AppStory.segmentHeight,
-                      color: scheme.outlineVariant,
-                      alignment: Alignment.centerLeft,
-                      child: FractionallySizedBox(
-                        widthFactor: i < current
-                            ? 1
-                            : i > current
-                            ? 0
-                            : (fillCurrent ? 1 : clock.value),
-                        heightFactor: 1,
-                        child: ColoredBox(color: scheme.primary),
-                      ),
-                    ),
+        child: Row(
+          children: [
+            for (var i = 0; i < count; i++) ...[
+              if (i > 0) const SizedBox(width: AppStory.segmentGap),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: AppRadius.pillBorder,
+                  child: Container(
+                    height: AppStory.segmentHeight,
+                    color: i <= current ? scheme.primary : scheme.outlineVariant,
                   ),
                 ),
-              ],
+              ),
             ],
-          ),
+          ],
         ),
       ),
-    );
-  }
-}
-
-/// One of the four story pages. The pages share one sea so its water changes in place: clear,
-/// murky, clear again (spec 003 FR-011).
-class _StoryPage extends StatelessWidget {
-  const _StoryPage({required this.index});
-
-  final int index;
-
-  static const List<String> _lines = [
-    AppStrings.storyHello,
-    AppStrings.storyScroll,
-    AppStrings.storyStudy,
-    AppStrings.storyCallBack,
-  ];
-  static const List<MascotMood> _moods = [
-    MascotMood.happy,
-    MascotMood.sad,
-    MascotMood.happy,
-    MascotMood.focused,
-  ];
-
-  /// Illustration values (not the user's clarity): litter below 40, fish from 70.
-  static const List<double> _clarity = [85, 20, 90, 90];
-
-  static int get count => _lines.length;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final headline = theme.textTheme.headlineMedium;
-    final animationsOff = MediaQuery.disableAnimationsOf(context);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (index == 0) ...[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const AppLogo(size: AppSpacing.xl),
-              const SizedBox(width: AppSpacing.sm),
-              Text(AppStrings.appName, style: theme.textTheme.titleLarge),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(AppStrings.headlineTop, textAlign: TextAlign.center, style: headline),
-          Text(
-            AppStrings.headlineBottom,
-            textAlign: TextAlign.center,
-            style: headline?.copyWith(color: theme.colorScheme.primary),
-          ),
-          const SizedBox(height: AppSpacing.md),
-        ],
-        Expanded(
-          key: const ValueKey('story-sea'),
-          child: ClipRRect(
-            borderRadius: AppRadius.heroBorder,
-            child: SeaScene(
-              clarity: _clarity[index],
-              mood: _moods[index],
-              variant: SeaSceneVariant.full,
-              // Gret's line sits in the sky above the water.
-              overlay: AnimatedSwitcher(
-                duration: animationsOff ? Duration.zero : AppMotion.entrance,
-                child: SpeechBubble(
-                  key: ValueKey(index),
-                  text: _lines[index],
-                  style: theme.textTheme.titleMedium,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

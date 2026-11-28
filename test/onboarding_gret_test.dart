@@ -1,7 +1,6 @@
 // 5.3 Gret và biển sống: onboarding as a story told by Gret (spec 003 US2, FR-011, FR-011a; tasks
 // T018–T020, T029). The saved data are unchanged apart from the app choice; these tests cover what
 // the redesign adds.
-import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:focus_app/data/mascot_mood.dart';
 import 'package:focus_app/data/repositories/blocked_apps_repository.dart';
@@ -12,7 +11,6 @@ import 'package:focus_app/l10n/app_strings.dart';
 import 'package:focus_app/theme/app_theme.dart';
 import 'package:focus_app/widgets/mascot/mascot_bubbles.dart';
 import 'package:focus_app/widgets/mascot/mascot_view.dart';
-import 'package:focus_app/widgets/sea/sea_scene.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:material_ui/material_ui.dart';
@@ -32,9 +30,8 @@ Future<void> _enterField(WidgetTester tester, String label, String text) async {
   await tester.pump();
 }
 
-/// From the first story page to the first quiz question (name left empty, reel length kept).
+/// From the first page to the first quiz question (name left empty, reel length kept).
 Future<void> _toQuiz(WidgetTester tester) async {
-  await tapAndSettle(tester, find.text(AppStrings.storySkip));
   await tapAndSettle(tester, find.text(AppStrings.continueLabel));
   await tapAndSettle(tester, find.text(AppStrings.continueLabel));
 }
@@ -46,7 +43,7 @@ Finder get _nameQuestion =>
 /// The 7 core questions (spec 015).
 Future<void> _answerQuiz(WidgetTester tester) => answerCoreQuiz(tester);
 
-/// From the first story page to the first-goal page, keeping the suggested apps.
+/// From the first page to the first-goal page, keeping the suggested apps.
 Future<void> _toFirstGoal(WidgetTester tester) async {
   await _toQuiz(tester);
   await _answerQuiz(tester);
@@ -68,17 +65,6 @@ Future<void> _animationsOn(WidgetTester tester) async {
 MascotMood _gretMood(WidgetTester tester) =>
     tester.widget<MascotView>(find.byType(MascotView)).mood;
 
-double _clarity(WidgetTester tester) => tester.widget<SeaScene>(find.byType(SeaScene)).clarity;
-
-/// A point inside the sea, at [fraction] of its width (story tap zones).
-Offset _inSea(WidgetTester tester, double fraction) {
-  final rect = tester.getRect(find.byType(SeaScene));
-  return Offset(rect.left + rect.width * fraction, rect.top + rect.height * 0.2);
-}
-
-Finder _storyLine(String line) =>
-    find.descendant(of: find.byType(SpeechBubble), matching: find.text(line));
-
 void main() {
   setUpAll(() {
     GoogleFonts.config.allowRuntimeFetching = false;
@@ -93,102 +79,23 @@ void main() {
     await Hive.close();
   });
 
-  group('Story', () {
-    testWidgets('First page: progress, brand, Gret says hello in the sea, skip and continue', (
+  group('First page (spec 022: the story pages are gone)', () {
+    testWidgets('Onboarding opens on Gret asking the name, with progress and no Back', (
       tester,
     ) async {
       await pumpApp(tester);
-
+      expect(_nameQuestion, findsOneWidget);
       expect(find.byKey(const ValueKey('story-progress')), findsOneWidget);
-      expect(find.text(AppStrings.appName), findsOneWidget);
-      expect(find.text(AppStrings.headlineTop), findsOneWidget);
-      expect(find.text(AppStrings.headlineBottom), findsOneWidget);
-      expect(_storyLine(AppStrings.storyHello), findsOneWidget);
-      expect(find.byType(SeaScene), findsOneWidget);
-      expect(_gretMood(tester), MascotMood.happy);
-      expect(find.text(AppStrings.storySkip), findsOneWidget);
-      expect(find.text(AppStrings.continueLabel), findsOneWidget);
-    });
-
-    testWidgets('"Tiếp tục" tells the four pages; the sea murks, then clears', (tester) async {
-      await pumpApp(tester);
-
-      final moods = [MascotMood.happy, MascotMood.sad, MascotMood.happy, MascotMood.focused];
-      for (var page = 0; page < _storyLines.length; page++) {
-        expect(_storyLine(_storyLines[page]), findsOneWidget);
-        expect(_gretMood(tester), moods[page]);
-        if (page == 1) expect(_clarity(tester), lessThan(40), reason: 'Litter in the water');
-        if (page == 2) expect(_clarity(tester), greaterThanOrEqualTo(70), reason: 'Fish return');
-        await tapAndSettle(tester, find.text(AppStrings.continueLabel));
+      expect(find.text(AppStrings.back), findsNothing);
+      for (final line in _storyLines) {
+        expect(find.text(line), findsNothing);
       }
-      expect(_nameQuestion, findsOneWidget);
-
-      // System Back goes one page back.
-      await tester.binding.handlePopRoute();
-      await tester.pumpAndSettle();
-      expect(_storyLine(AppStrings.storyCallBack), findsOneWidget);
-    });
-
-    testWidgets('A tap on the right goes forward, on the left goes back', (tester) async {
-      await pumpApp(tester);
-
-      await tester.tapAt(_inSea(tester, 0.85));
-      await tester.pumpAndSettle();
-      expect(_storyLine(AppStrings.storyScroll), findsOneWidget);
-
-      await tester.tapAt(_inSea(tester, 0.1));
-      await tester.pumpAndSettle();
-      expect(_storyLine(AppStrings.storyHello), findsOneWidget);
-    });
-
-    testWidgets('"Bỏ qua" jumps to the first question', (tester) async {
-      await pumpApp(tester);
-
-      await tapAndSettle(tester, find.text(AppStrings.storySkip));
-      expect(_nameQuestion, findsOneWidget);
-      expect(find.text(AppStrings.storySkip), findsNothing);
-    });
-
-    testWidgets('With animations on, a page turns after 4 s; holding a finger pauses it', (
-      tester,
-    ) async {
-      await pumpApp(tester);
-      await _animationsOn(tester);
-
-      await tester.pump(AppMotion.storyPage - const Duration(milliseconds: 200));
-      expect(_storyLine(AppStrings.storyHello), findsOneWidget);
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.pump();
-      expect(_storyLine(AppStrings.storyScroll), findsOneWidget);
-
-      final hold = await tester.startGesture(_inSea(tester, 0.85));
-      await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
-      await tester.pump(AppMotion.storyPage * 2);
-      expect(_storyLine(AppStrings.storyScroll), findsOneWidget, reason: 'Paused while held');
-
-      await hold.up();
-      await tester.pump(); // The resumed clock starts counting from this frame.
-      await tester.pump(AppMotion.storyPage + const Duration(milliseconds: 100));
-      await tester.pump();
-      expect(_storyLine(AppStrings.storyStudy), findsOneWidget);
-
-      await tester.pumpWidget(const SizedBox()); // Remove the looping scene before the test ends.
-    });
-
-    testWidgets('With "remove animations" on, story pages wait for the user', (tester) async {
-      await pumpApp(tester);
-
-      await tester.pump(AppMotion.storyPage * 3);
-      expect(_storyLine(AppStrings.storyHello), findsOneWidget);
     });
   });
 
   group('Questions', () {
-    testWidgets('Gret asks for a name after the story; it is saved when onboarding ends', (
-      tester,
-    ) async {
+    testWidgets('Gret asks for a name first; it is saved when onboarding ends', (tester) async {
       await pumpApp(tester);
-      await tapAndSettle(tester, find.text(AppStrings.storySkip));
       expect(_nameQuestion, findsOneWidget);
 
       await tester.enterText(find.byType(TextField), '  Khôi ');
@@ -207,7 +114,6 @@ void main() {
       tester,
     ) async {
       await pumpApp(tester);
-      await tapAndSettle(tester, find.text(AppStrings.storySkip));
       await tapAndSettle(tester, find.text(AppStrings.continueLabel)); // No name.
       expect(
         find.descendant(

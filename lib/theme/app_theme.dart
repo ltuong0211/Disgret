@@ -74,6 +74,10 @@ class AppColors {
   /// Bóng mờ sau icon và nhãn nổi trên video, để đọc rõ cả trên video sáng.
   static const Color onVideoShadow = Color(0x99000000);
   static const Color scrimClear = Color(0x00000000);
+
+  /// 5.7 Guided tour (spec 022): the dimmed, blurred screen around the feature being shown.
+  static const Color tourScrim = Color(0x99071B33);
+  static const Color tourGlow = sun;
   static const Color scrimDark = Color(0xCC000000);
   static const Color scrimTop = Color(0x80000000);
 
@@ -800,6 +804,9 @@ class AppLaunch {
 class AppMotion {
   AppMotion._();
 
+  /// 5.7 Guided tour (spec 022): the spotlight gliding to the next feature.
+  static const Duration tourMove = Duration(milliseconds: 420);
+
   static const Duration entrance = Duration(milliseconds: 280);
   static const Duration entranceStep = Duration(milliseconds: 60);
   static const double entranceOffset = 12;
@@ -1305,4 +1312,17 @@ class AppTheme {
       ),
     );
   }
+}
+
+/// 5.7 Guided tour (spec 022): blur and spotlight sizes.
+class AppTour {
+  AppTour._();
+
+  static const double blurSigma = 6;
+  static const double spotlightPadding = 8;
+  static const double spotlightRadius = 20;
+  static const double glowWidth = 3;
+  static const double glowBlur = 18;
+  static const double cardMaxWidth = 420;
+  static const double mascotSize = 72;
 }

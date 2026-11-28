@@ -70,3 +70,7 @@ id of one is added to `corner_owned` when it is first chosen, so it stays chosen
 - Sign-out (`HiveBoxes.clearAccountData`) clears every box and profile key except
   `blocked_packages` and `reminder_permission_asked`. "Xoá tài khoản" deletes the online records
   and the account; local data stays as guest data unless the user ticks the checkbox.
+
+- Guided tour (feature 022): profile key `tour_pending` (bool, missing → false) — a tour waits to be
+  shown on Hôm nay. Set when onboarding finishes or from "Xem lại hướng dẫn"; phone-only (not on
+  the ADR-0013 allow-list).

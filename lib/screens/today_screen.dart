@@ -21,6 +21,7 @@ import '../data/date_utils.dart';
 import '../data/session_plan.dart';
 import '../data/today_tasks.dart';
 import '../data/study_place.dart';
+import '../data/guided_tour.dart';
 import '../l10n/app_strings.dart';
 import '../providers/app_providers.dart';
 import '../providers/focus_session_provider.dart';
@@ -44,6 +45,7 @@ import '../widgets/sea/clarity_card.dart';
 import '../widgets/sea/sea_scene.dart';
 import '../widgets/session_plan_sheet.dart';
 import '../widgets/streak_card.dart';
+import '../widgets/tour/tour_keys.dart';
 
 class TodayScreen extends ConsumerWidget {
   const TodayScreen({super.key});
@@ -97,10 +99,13 @@ class TodayScreen extends ConsumerWidget {
       ),
       actions: [
         const _CornerButton(),
-        IconButton(
-          icon: const Icon(AppIcons.settings),
-          tooltip: AppStrings.settings,
-          onPressed: () => context.push(AppRoutes.settings),
+        TourKeys.mark(
+          TourTarget.settings,
+          IconButton(
+            icon: const Icon(AppIcons.settings),
+            tooltip: AppStrings.settings,
+            onPressed: () => context.push(AppRoutes.settings),
+          ),
         ),
       ],
     );
@@ -367,30 +372,33 @@ class _PlanView extends ConsumerWidget {
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                _GretArea(onTap: talk),
+                TourKeys.mark(TourTarget.sea, _GretArea(onTap: talk)),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                   child: StaggeredEntrance(
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ClarityCard(
-                              clarity: clarity,
-                              onTap: () => context.go(AppRoutes.progress),
+                      TourKeys.mark(
+                        TourTarget.clarity,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ClarityCard(
+                                clarity: clarity,
+                                onTap: () => context.go(AppRoutes.progress),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: StreakCard(
-                              days: streak,
-                              onTap: () => context.go(AppRoutes.progress),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: StreakCard(
+                                days: streak,
+                                onTap: () => context.go(AppRoutes.progress),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.sm),
-                      const _Shortcuts(),
+                      TourKeys.mark(TourTarget.shortcuts, const _Shortcuts()),
                       const SizedBox(height: AppSpacing.sm),
                       _GoalCard(goal: plan.goal!),
                       const SizedBox(height: AppSpacing.sm),
@@ -399,7 +407,7 @@ class _PlanView extends ConsumerWidget {
                         const SizedBox(height: AppSpacing.sm),
                       ],
                       _NextSessionCard(plan: plan),
-                      const _TodayTasksCard(),
+                      TourKeys.mark(TourTarget.todayTasks, const _TodayTasksCard()),
                     ],
                   ),
                 ),
@@ -418,10 +426,13 @@ class _PlanView extends ConsumerWidget {
               // Exactly one control leads into a session (FR-004, SC-002). When today is already
               // done or a rest day, the extra session is a secondary action.
               // Hold to start, like starting an engine (spec 018): one control, two titles.
-              child: HoldToStartButton(
-                title: isReady ? AppStrings.holdReady : AppStrings.extraSession,
-                action: isReady ? AppStrings.start : AppStrings.holdMore,
-                onStart: () => _openStudy(context, ref),
+              child: TourKeys.mark(
+                TourTarget.startButton,
+                HoldToStartButton(
+                  title: isReady ? AppStrings.holdReady : AppStrings.extraSession,
+                  action: isReady ? AppStrings.start : AppStrings.holdMore,
+                  onStart: () => _openStudy(context, ref),
+                ),
               ),
             ),
           ),

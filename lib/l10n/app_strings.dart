@@ -66,6 +66,41 @@ class AppStrings {
   static const String nameNotSet = 'Chưa đặt';
   static const String namePrivacy = 'Chỉ lưu trên máy này, để Gret chào bạn.';
 
+  // ---------- 5.7 Hướng dẫn lần đầu (spec 022) ----------
+  static const String tourSkip = 'Bỏ qua';
+  static const String tourNext = 'Tiếp nhé';
+  static const String tourBack = 'Lùi lại';
+  static const String tourDone = 'Bắt đầu thôi!';
+  static String tourProgress(int step, int total) => '$step/$total';
+  static const String tourReplay = 'Xem lại hướng dẫn';
+  static const String tourReplaySubtitle = 'Gret chỉ lại từng phần của màn Hôm nay';
+  static const String tourSeaTitle = 'Đây là biển của bạn 🌊';
+  static const String tourSeaBody =
+      'Mỗi phút bạn học, nước lại trong hơn và cá bơi về đông vui. Lướt mạng xã hội lâu là biển '
+      'đục đi đó!';
+  static const String tourClarityTitle = 'Độ trong và chuỗi ngày';
+  static const String tourClarityBody =
+      'Hai thẻ này cho biết biển trong cỡ nào và bạn đã giữ thói quen bao nhiêu ngày liền.';
+  static const String tourTasksTitle = 'Việc hôm nay ✅';
+  static const String tourTasksBody =
+      'Các thói quen cần làm hôm nay nằm ở đây. Làm xong thì chạm vào vòng tròn để đánh dấu.';
+  static const String tourShortcutsTitle = 'Lối tắt nhanh 🧭';
+  static const String tourShortcutsBody =
+      'Góc của Gret, bản đồ biển… Ngọc trai kiếm được khi học dùng để sắm đồ và trang trí nhà Gret.';
+  static const String tourStartTitle = 'Giữ để bắt đầu học 💪';
+  static const String tourStartBody =
+      'Giữ nút này một chút như nổ máy xe. Gret cho bạn xem vài reel tiếp lửa ngắn rồi vào phiên '
+      'học. Lỡ mở TikTok giữa chừng, Gret sẽ nhắc bạn quay lại.';
+  static const String tourHabitsTitle = 'Thói quen và giờ nhắc ⏰';
+  static const String tourHabitsBody =
+      'Đặt mục tiêu, thêm thói quen và hẹn giờ học. Tới giờ Gret sẽ nhắc bạn.';
+  static const String tourProgressTitle = 'Tiến độ 📈';
+  static const String tourProgressBody =
+      'Xem chuỗi ngày, báo cáo theo tuần, tháng và thống kê các phiên học của bạn.';
+  static const String tourSettingsTitle = 'Cài đặt ⚙️';
+  static const String tourSettingsBody =
+      'Đổi tên gọi, làm lại quiz, chọn app cần nhắc và xem lại hướng dẫn này bất cứ lúc nào.';
+
   // ---------- 6.3 Tài khoản và đồng bộ (spec 016) ----------
   static const String accountTitle = 'Tài khoản';
   static const String accountGuestSubtitle = 'Chưa đăng nhập — dữ liệu chỉ lưu trên máy này';

@@ -11,6 +11,7 @@ import '../l10n/app_strings.dart';
 import '../providers/account_providers.dart';
 import '../providers/app_providers.dart';
 import '../providers/focus_session_provider.dart';
+import '../providers/tour_providers.dart';
 import '../router/app_router.dart';
 import 'account_screen.dart';
 import '../services/focus_session_timer.dart';
@@ -180,6 +181,18 @@ class SettingsScreen extends ConsumerWidget {
                     await ref.read(profileRepositoryProvider).resetOnboarding();
                     if (!context.mounted) return;
                     context.go(AppRoutes.onboarding);
+                  },
+                ),
+                const Divider(),
+                // 5.7 Replays the guided tour on Hôm nay (spec 022 FR-006).
+                ListTile(
+                  leading: const Icon(AppIcons.replay),
+                  title: const Text(AppStrings.tourReplay),
+                  subtitle: const Text(AppStrings.tourReplaySubtitle),
+                  onTap: () async {
+                    await ref.read(guidedTourProvider.notifier).schedule();
+                    if (!context.mounted) return;
+                    context.go(AppRoutes.today);
                   },
                 ),
                 const Divider(),

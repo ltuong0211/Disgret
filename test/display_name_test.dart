@@ -144,7 +144,6 @@ void main() {
       await tapAndSettle(tester, find.byTooltip(AppStrings.settings));
       await tester.scrollUntilVisible(find.text('Xem lại màn giới thiệu'), 200);
       await tapAndSettle(tester, find.text('Xem lại màn giới thiệu'));
-      await tapAndSettle(tester, find.text(AppStrings.storySkip));
 
       expect(find.widgetWithText(TextField, 'Khôi'), findsOneWidget);
     });

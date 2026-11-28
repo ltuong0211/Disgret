@@ -78,9 +78,8 @@ Future<void> _enterField(WidgetTester tester, String label, String text) async {
   await tester.pump();
 }
 
-/// Từ trang story đầu tiên tới câu quiz đầu tiên: bỏ qua phần kể chuyện, giữ độ dài reel.
+/// From the first page to the first quiz question: no name, the reel length kept.
 Future<void> _skipToQuiz(WidgetTester tester) async {
-  await _tap(tester, find.text('Bỏ qua'));
   await _tap(tester, find.text('Tiếp tục')); // Tên gọi (spec 007), left empty.
   await _tap(tester, find.text('Tiếp tục')); // Độ dài reel.
 }
@@ -130,8 +129,8 @@ void main() {
     ) async {
       await _pumpApp(tester);
 
-      expect(find.text('DisGret'), findsOneWidget);
-      expect(find.bySemanticsLabel('Logo DisGret'), findsOneWidget);
+      // The story pages are gone (spec 022): Gret asks the name first.
+      expect(find.text('Bạn muốn Gret gọi bạn là gì?'), findsOneWidget);
       expect(find.text('Bắt đầu'), findsNothing);
 
       await _skipToQuiz(tester);

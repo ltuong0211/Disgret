@@ -16,6 +16,7 @@ import 'package:focus_app/providers/app_providers.dart';
 import 'package:focus_app/providers/focus_session_provider.dart';
 import 'package:focus_app/providers/launch_providers.dart';
 import 'package:focus_app/providers/reminder_providers.dart';
+import 'package:focus_app/providers/tour_providers.dart';
 import 'package:focus_app/services/native_bridge.dart';
 import 'package:focus_app/services/reminder_service.dart';
 import 'package:focus_app/theme/app_theme.dart';
@@ -62,6 +63,7 @@ Future<void> pumpApp(
   List<Reel>? reels,
   FakeReminderService? reminders,
   bool launchScreen = false,
+  bool guidedTour = false,
   List<Override> overrides = const [],
 }) async {
   tester.view.physicalSize = size;
@@ -82,6 +84,8 @@ Future<void> pumpApp(
         reminderServiceProvider.overrideWithValue(reminders ?? FakeReminderService()),
         // The launch screen (spec 011) covers the app for 1.4 s; only its own tests turn it on.
         launchScreenProvider.overrideWithValue(launchScreen),
+        // The guided tour (spec 022) covers Hôm nay; only its own tests turn it on.
+        guidedTourEnabledProvider.overrideWithValue(guidedTour),
         if (clock != null) clockProvider.overrideWithValue(clock),
         ...overrides,
       ],
