@@ -11,8 +11,29 @@ class HiveBoxes {
   static const String sessions = 'sessions';
   static const String events = 'events';
 
+  /// 6.3 Which account the local data belongs to (spec 016, data-model.md `account`).
+  static const String account = 'account';
+
+  /// 6.3 One change record per synced record (spec 016, data-model.md `sync_meta`).
+  static const String syncMeta = 'sync_meta';
+
   /// Reel đọc từ asset (1.2) nên không có box riêng.
-  static const List<String> all = [profile, goals, habits, habitLogs, sessions, events];
+  static const List<String> all = [
+    profile,
+    goals,
+    habits,
+    habitLogs,
+    sessions,
+    events,
+    account,
+    syncMeta,
+  ];
+
+  /// 6.3 Profile keys that belong to the phone, not to an account (spec 016 FR-013).
+  static const List<String> phoneBoundProfileKeys = [
+    'blocked_packages',
+    'reminder_permission_asked',
+  ];
 
   /// Boxes of removed features. Never opened or read, and their names are never reused.
   /// Older versions may have left them on disk; only [clearUserData] deletes them.
@@ -39,5 +60,17 @@ class HiveBoxes {
         // Hive has no disk path (memory-only boxes, as in tests): nothing on disk to delete.
       }
     }
+  }
+
+  /// 6.3 Sign-out (spec 016 FR-008, research.md R7): removes the signed-in account's data so the
+  /// next account on this phone sees none of it. Only [phoneBoundProfileKeys] survive.
+  static Future<void> clearAccountData() async {
+    for (final name in all) {
+      if (name == profile) continue;
+      await Hive.box<dynamic>(name).clear();
+    }
+    final profileBox = Hive.box<dynamic>(profile);
+    final keys = profileBox.keys.where((key) => !phoneBoundProfileKeys.contains(key)).toList();
+    await profileBox.deleteAll(keys);
   }
 }

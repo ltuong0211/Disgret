@@ -46,6 +46,12 @@ dependencies:
   flutter_svg: 2.5.0
   flutter_local_notifications: 22.0.0
   timezone: ^0.11.2
+  # 6.3 Optional online accounts (spec 016, ADR-0013): email + password sign-in and study-data
+  # sync. Only lib/services/firebase_auth_service.dart and firestore_remote_store.dart use them.
+  # Never add firebase_analytics, crashlytics, messaging or performance (constitution II).
+  firebase_core: 5.2.0
+  firebase_auth: 7.1.0
+  cloud_firestore: 7.2.0
 
 dev_dependencies:
   flutter_test:

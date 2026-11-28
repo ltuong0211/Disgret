@@ -5,6 +5,7 @@ import 'package:hive/hive.dart';
 import '../gret_corner_catalog.dart';
 import '../hive_boxes.dart';
 import '../mascot_species.dart';
+import '../sync_journal.dart';
 
 class GretCornerRepository {
   static const String _ownedKey = 'corner_owned';
@@ -34,12 +35,18 @@ class GretCornerRepository {
   MascotSpecies get mascot =>
       MascotSpecies.values.asNameMap()[_box.get(_mascotKey)] ?? MascotSpecies.gret;
 
-  Future<void> saveOwned(Set<String> ids) => _box.put(_ownedKey, ids.toList());
+  Future<void> saveOwned(Set<String> ids) => _put(_ownedKey, ids.toList());
 
   Future<void> saveWorn(Map<OutfitSlot, String> worn) =>
-      _box.put(_wornKey, {for (final entry in worn.entries) entry.key.name: entry.value});
+      _put(_wornKey, {for (final entry in worn.entries) entry.key.name: entry.value});
 
-  Future<void> saveSea(SeaPlace place) => _box.put(_seaKey, place.name);
+  Future<void> saveSea(SeaPlace place) => _put(_seaKey, place.name);
 
-  Future<void> saveMascot(MascotSpecies species) => _box.put(_mascotKey, species.name);
+  Future<void> saveMascot(MascotSpecies species) => _put(_mascotKey, species.name);
+
+  /// 6.3 Writes and journals the change for the account sync (spec 016).
+  Future<void> _put(String key, Object value) async {
+    await _box.put(key, value);
+    await SyncJournal.shared.touch(HiveBoxes.profile, key);
+  }
 }

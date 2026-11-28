@@ -2,6 +2,7 @@
 import 'package:hive/hive.dart';
 
 import '../hive_boxes.dart';
+import '../sync_journal.dart';
 import '../models/user_profile.dart';
 
 class ProfileRepository {
@@ -19,19 +20,25 @@ class ProfileRepository {
     return value == null ? null : UserProfile.fromMap(Map<String, dynamic>.from(value as Map));
   }
 
-  Future<void> saveProfile(UserProfile profile) => _box.put(_profileKey, profile.toMap());
+  Future<void> saveProfile(UserProfile profile) => _put(_profileKey, profile.toMap());
 
   /// Lưu hồ sơ và đánh dấu đã xong onboarding.
   Future<void> completeOnboarding(UserProfile profile) async {
     await saveProfile(profile);
-    await _box.put(_onboardingDoneKey, true);
+    await _put(_onboardingDoneKey, true);
   }
 
   /// Cho phép xem lại onboarding, hồ sơ đã lưu vẫn được giữ.
-  Future<void> resetOnboarding() => _box.put(_onboardingDoneKey, false);
+  Future<void> resetOnboarding() => _put(_onboardingDoneKey, false);
+
+  /// 6.3 Writes and journals the change for the account sync (spec 016).
+  Future<void> _put(String key, Object value) async {
+    await _box.put(key, value);
+    await SyncJournal.shared.touch(HiveBoxes.profile, key);
+  }
 
   /// 4.2 Cấp thành tích cao nhất đã hiện hộp thoại chúc mừng, để mỗi cấp chỉ chúc mừng một lần.
   int get celebratedLevel => _box.get(_celebratedLevelKey, defaultValue: 0) as int;
 
-  Future<void> saveCelebratedLevel(int level) => _box.put(_celebratedLevelKey, level);
+  Future<void> saveCelebratedLevel(int level) => _put(_celebratedLevelKey, level);
 }

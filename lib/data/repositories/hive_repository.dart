@@ -3,6 +3,8 @@
 // nên chạy được trên cả Android lẫn web.
 import 'package:hive/hive.dart';
 
+import '../sync_journal.dart';
+
 int _idCounter = 0;
 
 /// Tạo id mới theo thời gian; thêm bộ đếm để hai id tạo cùng lúc không trùng nhau.
@@ -27,9 +29,17 @@ abstract class HiveRepository<T> {
     return value == null ? null : _decode(value);
   }
 
-  Future<void> save(T item) => _box.put(idOf(item), toMap(item));
+  // 6.3 Every write is journaled so it can sync to the account (spec 016); the journal ignores
+  // boxes that never sync, such as events.
+  Future<void> save(T item) async {
+    await _box.put(idOf(item), toMap(item));
+    await SyncJournal.shared.touch(boxName, idOf(item));
+  }
 
-  Future<void> delete(String id) => _box.delete(id);
+  Future<void> delete(String id) async {
+    await _box.delete(id);
+    await SyncJournal.shared.touch(boxName, id, deleted: true);
+  }
 
   T _decode(dynamic value) => fromMap(Map<String, dynamic>.from(value as Map));
 }

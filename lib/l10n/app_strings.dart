@@ -47,6 +47,86 @@ class AppStrings {
   static const String nameNotSet = 'Chưa đặt';
   static const String namePrivacy = 'Chỉ lưu trên máy này, để Gret chào bạn.';
 
+  // ---------- 6.3 Tài khoản và đồng bộ (spec 016) ----------
+  static const String accountTitle = 'Tài khoản';
+  static const String accountGuestSubtitle = 'Chưa đăng nhập — dữ liệu chỉ lưu trên máy này';
+  static const String accountHaveAccount = 'Đã có tài khoản? Đăng nhập';
+  static const String accountSignIn = 'Đăng nhập';
+  static const String accountSignUp = 'Tạo tài khoản';
+  static const String accountNoAccountYet = 'Chưa có tài khoản? Tạo tài khoản';
+  static const String accountEmail = 'Email';
+  static const String accountPassword = 'Mật khẩu';
+  static const String accountShowPassword = 'Hiện mật khẩu';
+  static const String accountHidePassword = 'Ẩn mật khẩu';
+  static const String accountForgotPassword = 'Quên mật khẩu?';
+  static const String accountSendReset = 'Gửi link đặt lại';
+  static const String accountResetSent =
+      'Nếu email này có tài khoản, DisGret đã gửi link đặt lại mật khẩu';
+  static const String accountCreated = 'Đã tạo tài khoản';
+  static const String accountSignedIn = 'Đã đăng nhập';
+  static const String accountSyncNow = 'Đồng bộ ngay';
+  static const String accountSignOut = 'Đăng xuất';
+  static const String accountSignOutDuringSession = 'Kết thúc phiên học trước khi đăng xuất';
+  static const String accountDelete = 'Xoá tài khoản';
+  static const String accountDeleteNeedsNetwork = 'Cần có mạng để xoá tài khoản';
+  static const String accountGuestIntro =
+      'Đăng nhập để giữ thói quen và lịch sử học khi đổi điện thoại. Không đăng nhập vẫn dùng '
+      'được mọi tính năng.';
+  static String accountSyncedAt(String time) => 'Đã đồng bộ lúc $time';
+  static const String accountSyncing = 'Đang đồng bộ…';
+  static const String accountNotSynced = 'Chưa đồng bộ — sẽ tự đồng bộ khi có mạng';
+  static const String accountSignInAgain = 'Hãy đăng nhập lại';
+  static const String accountGone = 'Tài khoản đã bị xoá. Dữ liệu vẫn còn trên máy này.';
+
+  // Sign-in errors (research.md R10).
+  static const String accountEmailInUse = 'Email này đã có tài khoản. Đăng nhập?';
+  static const String accountWrongCredentials = 'Email hoặc mật khẩu không đúng';
+  static const String accountInvalidEmail = 'Email không hợp lệ';
+  static const String accountWeakPassword = 'Mật khẩu cần ít nhất 8 ký tự';
+  static const String accountTooManyRequests =
+      'Bạn thử quá nhiều lần. Hãy đợi vài phút rồi thử lại.';
+  static const String accountNoNetwork = 'Không có mạng. Thử lại sau.';
+  static const String accountGenericError = 'Đã có lỗi. Thử lại sau.';
+
+  // Privacy notice before sign-up (spec FR-005, contracts/account-ui.md).
+  static const String privacyTitle = 'Trước khi tạo tài khoản';
+  static const String privacyLeavesTitle = 'Những gì được lưu lên tài khoản';
+  static const String privacyLeaves =
+      'Email; mục tiêu, thói quen, lịch sử ghi nhận và phiên học; kết quả quiz động lực và độ '
+      'dài reel ưa thích; đã xem màn giới thiệu và cấp thành tích đã chúc mừng; lựa chọn trong '
+      'Góc của Gret; nơi học.';
+  static const String privacyWhereTitle = 'Lưu ở đâu';
+  static const String privacyWhere = 'Máy chủ Google Firebase ở Singapore.';
+  static const String privacyStaysTitle = 'Những gì chỉ ở trên máy này';
+  static const String privacyStays =
+      'Tên gọi, danh sách app cần nhắc, lịch sử xem reel và Reset break, quyền của điện thoại.';
+  static const String privacyNoTracking =
+      'DisGret không có quảng cáo, không theo dõi bạn và không chia sẻ dữ liệu cho ai.';
+  static const String privacyDelete =
+      '"Xoá tài khoản" trong Cài đặt xoá vĩnh viễn mọi dữ liệu lưu online.';
+  static const String privacyUnder16 =
+      'Nếu bạn dưới 16 tuổi, hãy hỏi ý kiến bố mẹ trước khi tạo tài khoản.';
+  static const String privacyAgree = 'Tôi đã đọc và đồng ý';
+  static const String privacyLater = 'Để sau';
+
+  // Dialogs.
+  static const String mergeTitle = 'Máy này đang có dữ liệu';
+  static const String mergeMessage =
+      'Tài khoản này đã có dữ liệu. Bạn muốn làm gì với dữ liệu đang có trên máy?';
+  static const String mergeKeepBoth = 'Gộp dữ liệu trên máy vào tài khoản';
+  static const String mergeUseAccount =
+      'Chỉ dùng dữ liệu của tài khoản (xoá dữ liệu khách trên máy)';
+  static const String signOutPendingTitle = 'Chưa lưu hết lên tài khoản';
+  static String signOutPendingMessage(int n) =>
+      'Có $n thay đổi chưa lưu lên tài khoản. Nếu đăng xuất bây giờ, các thay đổi này sẽ mất.';
+  static const String signOutStay = 'Ở lại';
+  static const String signOutAnyway = 'Vẫn đăng xuất';
+  static const String deleteTitle = 'Xoá tài khoản?';
+  static const String deleteMessage = 'Tài khoản và mọi dữ liệu lưu online sẽ bị xoá vĩnh viễn.';
+  static const String deleteLocalToo = 'Xoá cả dữ liệu trên máy này';
+  static const String deleteRetry = 'Thử lại';
+  static const String accountDeleted = 'Đã xoá tài khoản';
+
   // ---------- 2.2 Nhắc giờ học (spec 009) ----------
   static const String reminderTitle = 'Gret đang đợi bạn 🐟';
   static String reminderBody(String habit, int minutes) =>

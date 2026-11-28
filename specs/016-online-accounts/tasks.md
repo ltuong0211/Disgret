@@ -34,19 +34,19 @@ holds. Before editing a shared file, run `graphify explain "<Symbol>"` and
 - [x] T002 Merge `feature/003-gret-ocean` (with 015 landed) into `feature/016-online-accounts`;
       re-check research.md R6/R13 against the merged `user_profile.dart`, onboarding and Cài đặt
       (new profile keys outside `user` are phone-only unless added to R6 and ADR-0013).
-- [ ] T003 [P] Add `firebase.env.json` to `.gitignore` and create `firebase.env.example.json` with
+- [x] T003 [P] Add `firebase.env.json` to `.gitignore` and create `firebase.env.example.json` with
       the four keys and empty values (research.md R2).
-- [ ] T004 [P] Add `firebase_core`, `firebase_auth`, `cloud_firestore` to `pubspec.yaml` with exact
+- [x] T004 [P] Add `firebase_core`, `firebase_auth`, `cloud_firestore` to `pubspec.yaml` with exact
       versions compatible with Flutter 3.47 (research.md R1); run `flutter pub get`; confirm the
       Android debug build still succeeds without config (`flutter build apk --debug`).
 - [ ] T005 [P] Lead task (not an agent): create the Firebase project per quickstart.md
       prerequisites 1–4, publish `firestore.rules` (T006) and put `firebase.env.json` on the
       machine used for manual checks.
-- [ ] T006 [P] Create `firestore.rules` at the repo root exactly as in contracts/sync-records.md.
+- [x] T006 [P] Create `firestore.rules` at the repo root exactly as in contracts/sync-records.md.
 
 ## Phase 2: Foundational (blocks every story)
 
-- [ ] T007 [P] Write unit tests in `test/sync_merge_test.dart`: `resolve` (newer wins, tie →
+- [x] T007 [P] Write unit tests in `test/sync_merge_test.dart`: `resolve` (newer wins, tie →
       deleted wins then remote, missing local meta counts as updatedAt 0 — data-model.md
       sync_meta.updatedAt / sync_meta.deleted); `decideFirstLogin` for every row of the
       data-model.md table; `toRemoteData` keeps only `motivationTypes`, `preferredReelLength`,
@@ -55,42 +55,42 @@ holds. Before editing a shared file, run `graphify explain "<Symbol>"` and
       (research.md R5 allow-list); unknown box/key → `skip`; a pushed tombstone's local
       `updatedAt` still beats an older remote copy (data-model.md sync_meta.deleted, analyze U2).
       **Done when** tests exist and fail.
-- [ ] T008 [P] Write unit tests in `test/auth_error_message_test.dart` for every row of research.md
+- [x] T008 [P] Write unit tests in `test/auth_error_message_test.dart` for every row of research.md
       R10, plus an unknown code → generic "Đã có lỗi. Thử lại sau.". **Done when** they fail.
-- [ ] T009 Implement `lib/data/sync_merge.dart` per contracts/services.md (pure, no Hive, no
+- [x] T009 Implement `lib/data/sync_merge.dart` per contracts/services.md (pure, no Hive, no
       Firebase). T007 and T008 pass.
-- [ ] T010 Add `account` and `sync_meta` to `lib/data/hive_boxes.dart` (`all`, `openAll`) and add
+- [x] T010 Add `account` and `sync_meta` to `lib/data/hive_boxes.dart` (`all`, `openAll`) and add
       `clearAccountData()` that clears goals, habits, habit_logs, sessions, events, account,
       sync_meta and every profile key except `blocked_packages` and `reminder_permission_asked`
       (research.md R7; data-model.md account.owner_uid, account.email, account.last_pulled_at,
       account.last_sync_ok_at all removed). Keep `clearUserData()` behaviour (it now also
       clears the two new boxes). Update `test/test_helpers.dart` to open the new boxes.
-- [ ] T011 [P] Write unit tests in `test/sync_journal_test.dart` (Hive memory boxes): `touch` on a
+- [x] T011 [P] Write unit tests in `test/sync_journal_test.dart` (Hive memory boxes): `touch` on a
       synced box sets data-model.md sync_meta.updatedAt / sync_meta.dirty and ignores events,
       `blocked_packages`, `reminder_permission_asked`; delete writes sync_meta.deleted;
       `pendingCount`; `markPushed` clears dirty and drops pushed tombstones;
       `journalAllExisting` marks every existing synced record dirty. `clearAccountData` keeps the
       two phone-bound keys. **Done when** they fail.
-- [ ] T012 Implement `lib/data/sync_journal.dart` per contracts/services.md and research.md R6,
+- [x] T012 Implement `lib/data/sync_journal.dart` per contracts/services.md and research.md R6,
       writing data-model.md sync_meta.updatedAt, sync_meta.deleted and sync_meta.dirty exactly as
       the data-model.md rules say (tombstones keep `updatedAt` after push); T011 passes.
-- [ ] T013 Call the journal from `HiveRepository.save/delete` in
+- [x] T013 Call the journal from `HiveRepository.save/delete` in
       `lib/data/repositories/hive_repository.dart` (journal ignores the `events` box) and from the
       write methods of `profile_repository.dart`, `study_place_repository.dart`,
       `gret_corner_repository.dart` in `lib/data/repositories/`. Inject the journal with a default
       so existing call sites and tests compile unchanged. Full test suite passes.
-- [ ] T014 [P] Create `lib/services/auth_service.dart` and `lib/services/remote_store.dart`
+- [x] T014 [P] Create `lib/services/auth_service.dart` and `lib/services/remote_store.dart`
       (interfaces, `AccountUser`, `AuthFailure`, `SyncRecord`, `PullResult`, `RemoteUnavailable`)
       per contracts/services.md; create `test/fakes/fake_auth_service.dart` and
       `test/fakes/in_memory_remote_store.dart` (offline switch, server-time counter).
-- [ ] T015 [P] Create `lib/services/accounts_config.dart` (research.md R2): `isAvailable` false on
+- [x] T015 [P] Create `lib/services/accounts_config.dart` (research.md R2): `isAvailable` false on
       web or when any define is empty.
 - [ ] T016 Create `lib/providers/account_providers.dart` with `authServiceProvider`,
       `remoteStoreProvider`, `syncJournalProvider`, `accountStateProvider`
       (`unavailable` | `guest` | `signedIn`, data-model.md AccountState) and `syncStatusProvider`
       (data-model.md SyncStatus); make `AppDataActions._reloadAll` public as `reloadAll()` in
       `lib/providers/app_providers.dart`.
-- [ ] T017 Add account strings from contracts/account-ui.md and research.md R10 to
+- [x] T017 Add account strings from contracts/account-ui.md and research.md R10 to
       `lib/l10n/app_strings.dart`.
 
 **Checkpoint**: everything compiles, all old tests pass, no Firebase import outside services.

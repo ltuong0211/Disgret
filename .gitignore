@@ -53,3 +53,9 @@ app.*.map.json
 # Graphify: generated knowledge graph (each developer rebuilds locally; see AGENTS.md)
 graphify-out/
 .claude/settings.json.graphify-bak
+
+# 6.3 Firebase config for optional accounts (spec 016, ADR-0013): supplied by the project lead,
+# never committed. Copy firebase.env.example.json to firebase.env.json and fill it in.
+/firebase.env.json
+/lib/firebase_options.dart
+/android/app/google-services.json
