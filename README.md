@@ -123,6 +123,24 @@ Danh sách app bị nhắc mặc định: TikTok, Facebook, Instagram, YouTube, 
 Cài đặt → **Ứng dụng cần nhắc**. Muốn xem trước màn can thiệp mà không cần học: Cài đặt →
 **Thử màn can thiệp**.
 
+### Gõ tiếng Việt có dấu trên máy ảo
+
+Máy ảo Android nhận bàn phím Mac như bàn phím vật lý: nó nhận từng phím bấm, nên bộ gõ Telex/VNI
+của macOS (hay Unikey, EVKey) không ghép được dấu. Đây không phải lỗi của DisGret: trên điện thoại
+thật, Gboard hay Laban Key gõ dấu bình thường. Trên máy ảo:
+
+1. Đổi bộ gõ của Mac về **ABC** khi gõ vào máy ảo.
+2. Trong máy ảo: **Settings → System → Keyboard → On-screen keyboard → Gboard → Languages → Add
+   keyboard → Tiếng Việt (Telex)**.
+3. **Settings → System → Keyboard → Physical keyboard → bật "Use on-screen keyboard"**, rồi gõ bằng
+   cách bấm chuột trên bàn phím ảo. Hoặc chạy lệnh dưới để bàn phím ảo luôn hiện:
+
+```bash
+adb shell settings put secure show_ime_with_hard_keyboard 1
+```
+
+4. Cách nhanh nhất cho chữ dài: gõ trên Mac, copy, rồi trong máy ảo giữ ô nhập → **Paste**.
+
 ## Kịch bản demo (khoảng 5 phút)
 
 ### Chuẩn bị trước buổi thuyết trình
