@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-27
 
-**Status**: Draft — blocked on approval of constitution 2.0.0 and ADR-0013 (both Proposed)
+**Status**: Approved for implementation (constitution 2.0.0 and ADR-0013 accepted 2026-11-28)
 
 **Input**: Project lead: each student signs up, logs in and logs out with their own account. The
 lead chose real online accounts over local per-device profiles, knowing it needs a constitution
@@ -28,9 +28,21 @@ ADR-0013 (backend, synced data), spec 015 (quiz/profile fields that sync) landin
   privacy notice tells students under 16 to ask a parent first, and the minimal-data and
   self-deletion rules apply to everyone.
 
+### Session 2026-11-28 (after `/speckit-analyze`)
+
+- Q: Is the R-code rule met? → A: Recorded as a lead-approved exception (infrastructure, no
+  R-code).
+- Q: Does the display name sync? → A: No. It stays on the phone (ADR-0012 unchanged).
+- Q: Which profile values sync? → A: An allow-list: inside the profile only motivation types,
+  preferred reel length and the quiz answers (spec 015); plus "intro seen", the highest
+  celebrated level, Góc của Gret choices and the study place. Anything else stays on the phone.
+
 **Scenario served**: S3 (keeping it up over several days) — a student keeps their streaks, habits
-and history when they change phone, reinstall the app or share a phone with a sibling. It does not
-move an R-code directly; it protects the multi-day evidence that R-codes in S3 rely on.
+and history when they change phone, reinstall the app or share a phone with a sibling.
+
+**R-code exception (Principle I, approved by the project lead 2026-11-28)**: accounts are
+infrastructure that keeps data across devices; this feature moves no R-code. The lead approved
+this explicit exception.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -218,7 +230,7 @@ turn the network on; within a minute the account shows the new log and session o
 - **FR-004**: The only sign-in method is email + password. Google or other social sign-in is out
   of scope.
 - **FR-005**: Before account creation the app MUST show a Vietnamese privacy notice that lists
-  every piece of data that leaves the phone, where it is stored (Singapore), that nothing else is
+  every piece of data that leaves the phone (FR-014), where it is stored (Singapore), that nothing else is
   collected, how to delete it, and advises students under 16 to ask a parent first. There is no
   age check and no age is stored.
 - **FR-006**: Passwords MUST be at least 8 characters; error messages MUST NOT reveal whether an
@@ -244,10 +256,12 @@ turn the network on; within a minute the account shows the new log and session o
 
 **Sync and offline**
 
-- **FR-014**: The data that leaves the phone is the account email and the study data: goals,
-  habits, habit logs, sessions and the study profile choices (motivation quiz results, preferred
-  reel length and formats, display name, Góc của Gret choices, study place). Events, installed
-  apps, the blocked-app list, demo mode and permission flags MUST never leave the phone.
+- **FR-014**: The data that leaves the phone is an allow-list (ADR-0013 Decision 5): the account
+  email; goals, habits, habit logs and sessions; motivation types, preferred reel length and quiz
+  answers; whether the intro was seen and the highest celebrated level; Góc của Gret choices; the
+  study place. Everything else — display name, demo mode, events, installed apps, the blocked-app
+  list, permission flags and any field added later — MUST stay on the phone until ADR-0013 lists
+  it.
 - **FR-015**: While signed in, every change MUST be saved on the phone first and synced
   automatically when network is available (on app start, on resume, and shortly after a change).
 - **FR-016**: Conflicts: for the same record edited on two phones, the later edit wins; deleted

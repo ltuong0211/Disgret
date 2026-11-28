@@ -1,6 +1,7 @@
 # ADR-0001: Continue on the existing stack, Android-only, local-only data
 
-- Status: Accepted
+- Status: Accepted; the "local-only data" part is superseded by ADR-0013 (optional online
+  accounts, constitution 2.0.0, 2026-11-28)
 - Date: 2026-11-22
 
 ## Context

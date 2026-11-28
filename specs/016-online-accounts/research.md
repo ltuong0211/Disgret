@@ -51,7 +51,9 @@ technical decisions behind `plan.md`.
 - **Decision**: one collection per user: `users/{uid}/records/{box}__{key}` with fields
   `box`, `key`, `data` (the Hive map, absent when deleted), `updatedAt` (int, device ms),
   `deleted` (bool), `syncedAt` (server timestamp). Pull = query `syncedAt > lastPulledAt` ordered
-  by `syncedAt` (single-field index, automatic). Push = batched writes, ≤ 400 per batch.
+  by `syncedAt` (single-field index, automatic), starting 60 s before `last_pulled_at` (analyze
+  U1: a concurrent batch can get a slightly older server time than one already pulled). Push =
+  batched writes, ≤ 400 per batch.
 - **Rationale**: one generic collection keeps the code tiny and the rules one line; the sample
   data (~1,000 records) uploads in 3 batches, well within the 20k writes/day free quota.
 - **Alternatives**: one collection per box (more code, same rules); one document per box (1 MiB
@@ -66,22 +68,24 @@ technical decisions behind `plan.md`.
 - **Rationale**: last-write-wins per record is the simplest rule a student can explain; data loss
   is limited to concurrent edits of the same habit/goal field set.
 - **Risk**: device clocks that are badly wrong; accepted for course scale and documented.
-- **Excluded fields**: in the profile `user` map, `demoMode` is removed before upload and the local
-  value is kept when a remote `user` map is applied.
+- **Allow-list, not deny-list** (analyze C2): from the profile `user` map only `motivationTypes`,
+  `preferredReelLength` and `quizAnswers` are uploaded (`SyncScope.userFields`). Applying a remote
+  `user` map overwrites only those fields and keeps the local `displayName`, `demoMode` and any
+  other field. A field added by a later spec stays local until ADR-0013 and this list name it.
 
 ## R6. What is synced
 
 | Box | Keys | Synced |
 |---|---|---|
 | `goals`, `habits`, `habit_logs`, `sessions` | every record | yes |
-| `profile` | `user` (minus `demoMode`), `onboarding_done`, `celebrated_level`, `study_place`, `corner_owned`, `corner_worn`, `corner_sea`, `corner_mascot` | yes |
+| `profile` | `user` (only `motivationTypes`, `preferredReelLength`, `quizAnswers`), `onboarding_done`, `celebrated_level`, `study_place`, `corner_owned`, `corner_worn`, `corner_sea`, `corner_mascot` | yes |
+| `profile` → `user` | `displayName`, `demoMode`, any later field | no (phone-only; display name per ADR-0012) |
 | `profile` | `blocked_packages`, `reminder_permission_asked` | no (phone-bound) |
 | `events` | all | no (phone-only; cleared on sign-out) |
 | `account`, `sync_meta` | all | no (local bookkeeping) |
 
-Keys added later by other specs (for example 015's profile fields inside `user`) sync
-automatically when they live inside `user`; a new top-level profile key is phone-only until
-ADR-0013 and this table list it.
+Both box keys and `user` fields are allow-listed: anything a later spec adds stays phone-only
+until ADR-0013 and this table list it.
 
 ## R7. First login and isolation
 
@@ -126,7 +130,8 @@ ADR-0013 and this table list it.
 | `too-many-requests` | "Bạn thử quá nhiều lần. Hãy đợi vài phút rồi thử lại." |
 | `network-request-failed`, timeout | "Không có mạng. Thử lại sau." |
 | `requires-recent-login` | ask for the password again |
-| `user-disabled`, `user-token-expired` on sync | treat as deleted/expired: sign out locally, keep data as guest, notice "Tài khoản đã bị xoá" or "Hãy đăng nhập lại" |
+| `user-not-found`, `user-disabled` on sync | account gone: sign out locally, clear `owner_uid`, keep data as guest, notice "Tài khoản đã bị xoá. Dữ liệu vẫn còn trên máy này." |
+| `user-token-expired`, `requires-recent-login` on sync | keep `owner_uid` and pending changes, status "Hãy đăng nhập lại"; after signing in again with the same account sync resumes (`normalSync`) |
 
 The mapping is a pure function (`authErrorMessage(code)`) with a unit test.
 

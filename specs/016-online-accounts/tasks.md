@@ -7,9 +7,10 @@ description: "Tasks for feature 016: optional online accounts"
 **Input**: `specs/016-online-accounts/` (plan.md, spec.md, research.md, data-model.md,
 contracts/sync-records.md, contracts/services.md, contracts/account-ui.md, quickstart.md)
 
-**Prerequisites**: (1) the lead approves constitution 2.0.0 and ADR-0013 (T001); (2) spec 015 is
-merged into `feature/003-gret-ocean` and this branch is rebased or merged onto it (T002); (3) the
-lead has supplied `firebase.env.json` for the manual checks (T005). Cite tasks as `016-Txxx`.
+**Prerequisites**: (1) the lead approves constitution 2.0.0 and ADR-0013 (T001, done
+2026-11-28); (2) spec 015 is merged into `feature/003-gret-ocean` and this branch merges it (T002,
+done: 18bc86e); (3) the lead has supplied `firebase.env.json` for the manual checks (T005, not
+yet — code is built and tested against fakes first). Cite tasks as `016-Txxx`.
 
 **Tests**: Required by Constitution V. Pure-logic tests are written first and must fail.
 
@@ -22,7 +23,7 @@ holds. Before editing a shared file, run `graphify explain "<Symbol>"` and
 
 ## Phase 1: Setup and governance gate
 
-- [ ] T001 Get the lead's approval in chat for constitution 2.0.0 and ADR-0013. Then in
+- [x] T001 Get the lead's approval in chat for constitution 2.0.0 and ADR-0013. Then in
       `.specify/memory/constitution.md` remove the Sync Impact Report comment and the "(Proposed…)"
       note, set **Last Amended** to the approval date; set ADR-0013 Status to "Accepted (project
       lead, chat <date>)" in `docs/decisions/0013-online-accounts-backend.md`; add "Partly
@@ -30,7 +31,7 @@ holds. Before editing a shared file, run `graphify explain "<Symbol>"` and
       `docs/decisions/0001-brownfield-stack-android-local-only.md`; update the `AGENTS.md` "Stack"
       bullet and the "Security and privacy" bullets to match Principle II 2.0.0. **No code task
       may start before this.**
-- [ ] T002 Merge `feature/003-gret-ocean` (with 015 landed) into `feature/016-online-accounts`;
+- [x] T002 Merge `feature/003-gret-ocean` (with 015 landed) into `feature/016-online-accounts`;
       re-check research.md R6/R13 against the merged `user_profile.dart`, onboarding and Cài đặt
       (new profile keys outside `user` are phone-only unless added to R6 and ADR-0013).
 - [ ] T003 [P] Add `firebase.env.json` to `.gitignore` and create `firebase.env.example.json` with
@@ -48,8 +49,12 @@ holds. Before editing a shared file, run `graphify explain "<Symbol>"` and
 - [ ] T007 [P] Write unit tests in `test/sync_merge_test.dart`: `resolve` (newer wins, tie →
       deleted wins then remote, missing local meta counts as updatedAt 0 — data-model.md
       sync_meta.updatedAt / sync_meta.deleted); `decideFirstLogin` for every row of the
-      data-model.md table; `stripPhoneOnly` removes `demoMode` from `profile/user` and keeps other
-      fields (research.md R5); unknown box/key → `skip`. **Done when** tests exist and fail.
+      data-model.md table; `toRemoteData` keeps only `motivationTypes`, `preferredReelLength`,
+      `quizAnswers` of `profile/user` (drops `displayName`, `demoMode` and any unknown field) and
+      `fromRemoteData` merges them into the local map keeping local `displayName`/`demoMode`
+      (research.md R5 allow-list); unknown box/key → `skip`; a pushed tombstone's local
+      `updatedAt` still beats an older remote copy (data-model.md sync_meta.deleted, analyze U2).
+      **Done when** tests exist and fail.
 - [ ] T008 [P] Write unit tests in `test/auth_error_message_test.dart` for every row of research.md
       R10, plus an unknown code → generic "Đã có lỗi. Thử lại sau.". **Done when** they fail.
 - [ ] T009 Implement `lib/data/sync_merge.dart` per contracts/services.md (pure, no Hive, no
@@ -57,7 +62,8 @@ holds. Before editing a shared file, run `graphify explain "<Symbol>"` and
 - [ ] T010 Add `account` and `sync_meta` to `lib/data/hive_boxes.dart` (`all`, `openAll`) and add
       `clearAccountData()` that clears goals, habits, habit_logs, sessions, events, account,
       sync_meta and every profile key except `blocked_packages` and `reminder_permission_asked`
-      (research.md R7; data-model.md account.*). Keep `clearUserData()` behaviour (it now also
+      (research.md R7; data-model.md account.owner_uid, account.email, account.last_pulled_at,
+      account.last_sync_ok_at all removed). Keep `clearUserData()` behaviour (it now also
       clears the two new boxes). Update `test/test_helpers.dart` to open the new boxes.
 - [ ] T011 [P] Write unit tests in `test/sync_journal_test.dart` (Hive memory boxes): `touch` on a
       synced box sets data-model.md sync_meta.updatedAt / sync_meta.dirty and ignores events,
@@ -65,8 +71,9 @@ holds. Before editing a shared file, run `graphify explain "<Symbol>"` and
       `pendingCount`; `markPushed` clears dirty and drops pushed tombstones;
       `journalAllExisting` marks every existing synced record dirty. `clearAccountData` keeps the
       two phone-bound keys. **Done when** they fail.
-- [ ] T012 Implement `lib/data/sync_journal.dart` per contracts/services.md and research.md R6;
-      T011 passes.
+- [ ] T012 Implement `lib/data/sync_journal.dart` per contracts/services.md and research.md R6,
+      writing data-model.md sync_meta.updatedAt, sync_meta.deleted and sync_meta.dirty exactly as
+      the data-model.md rules say (tombstones keep `updatedAt` after push); T011 passes.
 - [ ] T013 Call the journal from `HiveRepository.save/delete` in
       `lib/data/repositories/hive_repository.dart` (journal ignores the `events` box) and from the
       write methods of `profile_repository.dart`, `study_place_repository.dart`,
@@ -120,12 +127,16 @@ holds. Before editing a shared file, run `graphify explain "<Symbol>"` and
       `uploadGuest` journals all existing records, pushes them, sets data-model.md
       account.owner_uid / account.email / account.last_sync_ok_at, leaves pending 0; events and
       phone-bound keys are never in the pushed set (FR-014); the pushed `profile/user` has no
-      `demoMode`; app killed mid-upload (fake throws after first batch) → next `syncNow` finishes
-      with no duplicates. **Done when** they fail.
+      `displayName` or `demoMode`, and no record carries any account attribute other than the email
+      stored locally (FR-019, analyze G1); app killed mid-upload (fake throws after first batch) →
+      next `syncNow` finishes with no duplicates. **Done when** they fail.
 - [ ] T023 [US2] Implement `lib/services/sync_engine.dart` `syncNow` (push then pull, never
       throws, updates `syncStatusProvider`) and `firstLogin` per contracts/services.md and
-      data-model.md state transitions; apply remote records directly to Hive, update sync_meta
-      with dirty false, call `reloadAll()` and reschedule reminders. T022 passes.
+      data-model.md state transitions; set data-model.md account.owner_uid, account.email,
+      account.last_pulled_at (newest `syncedAt` applied; next pull from it − 60 000 ms) and
+      account.last_sync_ok_at; apply remote records directly to Hive, set sync_meta.updatedAt from
+      the remote and sync_meta.dirty false, call `reloadAll()` and reschedule reminders. T022
+      passes.
 - [ ] T024 [P] [US2] Implement `lib/services/firebase_auth_service.dart` (signUp, signIn,
       sendPasswordReset, reauthenticate, deleteUser, signOut; maps codes to `AuthFailure`, 15 s
       timeouts) — the only file importing `firebase_auth`.
@@ -184,12 +195,15 @@ holds. Before editing a shared file, run `graphify explain "<Symbol>"` and
 
 - [ ] T033 [P] [US5] Extend `test/sync_engine_test.dart`: offline push keeps entries dirty and
       status `offline(pending)`; later `syncNow` pushes them; two phones editing the same habit →
-      newer `updatedAt` wins on both after sync; logs from both phones all kept (FR-016);
-      `user-token-expired` / account gone → status error, local data kept, owner cleared
-      (spec edge cases). **Done when** they fail.
+      newer `updatedAt` wins on both after sync; logs from both phones all kept (FR-016); a record
+      whose server time is up to 60 s older than `last_pulled_at` is still pulled (overlap, analyze
+      U1); account gone (`user-not-found`/`user-disabled`) → owner cleared, data kept as guest;
+      `user-token-expired` → owner and pending kept, status "Hãy đăng nhập lại" (research.md R10).
+      **Done when** they fail.
 - [ ] T034 [US5] Implement the triggers (research.md R8): sync after auth ready, on
       `AppLifecycleState.resumed` in `lib/app.dart`, 5 s debounce after a journal change, 60 s
-      retry while foreground with pending; handle account-gone per research.md R10. Show the
+      retry while foreground with pending; pull from data-model.md account.last_pulled_at − 60 000
+      ms; handle account-gone and token-expired per research.md R10. Show the
       status strings in Cài đặt and AccountScreen (FR-017). T033 passes.
 - [ ] T035 [US5] Make "Xoá toàn bộ dữ liệu" (`AppDataActions.clearAll` in
       `lib/providers/app_providers.dart`) also sign out locally without touching online data

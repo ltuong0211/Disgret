@@ -19,7 +19,9 @@ scenarios: **S1** hard to start, **S2** distracted mid-session, **S3** keeping i
   MethodChannel `focus/native`.
 - Android is the only supported platform. Web (`flutter run -d chrome`) is for quick UI work only;
   iOS and desktop folders exist but are unsupported.
-- All data stays on the device. No backend, accounts, Firebase, analytics or network calls.
+- Local-first: Hive on the device is the source of truth and the app works fully offline and
+  without an account. Optional accounts (spec 016, ADR-0013) use Firebase Auth + Firestore only;
+  no other backend, analytics or network calls.
 
 ## Architecture
 
@@ -137,7 +139,13 @@ Setup, refresh and query details: [docs/architecture/codebase-graph.md](docs/arc
 ## Security and privacy
 
 - Never commit secrets, keystores, `key.properties`, `local.properties` or personal data.
-- No network requests, telemetry or third-party SDKs; new Android permissions need an ADR.
+- Network calls only to the ADR-0013 backend, only through the `lib/services/` auth/sync
+  services; no telemetry, analytics, crash-reporting or ads SDKs; new Android permissions need
+  an ADR.
+- Only the fields on ADR-0013's allow-list leave the phone; events, installed apps, the
+  blocked-app list and the display name never do.
+- Never commit backend config (`firebase.env.json`, `google-services.json`,
+  `firebase_options.dart`); agents never create cloud projects or accounts.
 - Users may be under 18: collect nothing that identifies them; any export must be explicit and
   anonymous.
 

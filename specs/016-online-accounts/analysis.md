@@ -95,3 +95,13 @@ None. T001–T006 are setup/governance; T039–T042 are polish.
   and tasks T010/T012/T023/T033.
 - MEDIUM/LOW items can be folded into the same edit.
 - Remediation edits were **not** applied; they wait for the lead's go-ahead.
+
+## Resolution (2026-11-28)
+
+The lead confirmed directly in this session: constitution 2.0.0 ratified and ADR-0013 Accepted
+(C1, T001); R-code recorded as an approved exception in spec.md (C3); display name stays
+phone-only (I1). Fixed in the docs: C2 (allow-list of `user` fields: `motivationTypes`,
+`preferredReelLength`, `quizAnswers`), I2 (`onboarding_done`, `celebrated_level` added to FR-014,
+ADR-0013 and the notice), U1 (pull overlap 60 s), U2 (tombstones keep `updatedAt`), I3 (token
+expired ≠ account gone), F1 (exact field citations in T010, T012, T023, T034), G1 (FR-019 check
+in T022). Remaining LOW items (A1, I4, G2) are handled during implementation.

@@ -11,7 +11,7 @@ changed**. Two new Hive boxes hold the bookkeeping; both names are new and never
 |---|---|---|---|
 | `owner_uid` | String | Firebase uid that the local data belongs to | guest data |
 | `email` | String | email shown in Cài đặt → Tài khoản | empty |
-| `last_pulled_at` | int (ms, server time) | `syncedAt` of the newest remote record applied | 0 (pull all) |
+| `last_pulled_at` | int (ms, server time) | `syncedAt` of the newest remote record applied; the next pull starts 60 000 ms earlier (overlap) | 0 (pull all) |
 | `last_sync_ok_at` | int (ms, device time) | last fully successful sync, for "Đã đồng bộ lúc HH:mm" | never synced |
 
 ### `sync_meta` (key `"<box>/<recordKey>"` → map)
@@ -30,8 +30,9 @@ Rules:
   `updatedAt = 0, dirty = false`. On first upload (`uploadGuest`) every existing synced record is
   journaled as dirty first.
 - Pending count = number of entries with `dirty == true`.
-- After a successful push of an entry, `dirty = false`. Tombstones (`deleted == true`) are kept
-  locally until pushed, then removed from `sync_meta`; the remote tombstone stays.
+- After a successful push of an entry, `dirty = false`. Tombstones (`deleted == true`) keep their
+  `updatedAt` locally after the push (analyze U2), so a re-pulled older remote copy cannot bring a
+  deleted record back; the remote tombstone stays too.
 
 ## Remote documents (Firestore)
 
@@ -41,7 +42,7 @@ Rules:
 |---|---|---|
 | `box` | string | one of the synced boxes |
 | `key` | string | Hive key (record id or profile key) |
-| `data` | map | Hive map; absent when `deleted`; `user` map without `demoMode` |
+| `data` | map | Hive map; absent when `deleted`; for `profile/user` only the allow-listed fields |
 | `updatedAt` | int | device ms, used for last-write-wins |
 | `deleted` | bool | tombstone |
 | `syncedAt` | timestamp | server time, used for incremental pull |

@@ -1,31 +1,3 @@
-<!--
-Sync Impact Report (2026-11-27) — STATUS: PROPOSED, awaiting project-lead approval
-- Version change: 1.0.0 → 2.0.0 (MAJOR: Principle II redefined; accounts and one backend become
-  allowed under limits that did not exist before).
-- Modified principles:
-  - II. Local-Only Privacy → II. Local-First Privacy with Minimal Accounts
-  - IV. Layered Simplicity: network calls are added to the one-way layering rule (MINOR-level
-    wording expansion carried by this MAJOR bump).
-  - VII. Agent Collaboration: backend config files join the never-commit list.
-- Added sections: none (rules live inside Principle II and the Platform section).
-- Removed sections: none.
-- Platform and Technology Constraints: stack line gains "one ADR-approved auth/sync backend".
-- Dependent files needing an update once approved (not edited by this proposal):
-  - ⚠ AGENTS.md — "Stack" bullet ("No backend, accounts, Firebase, analytics or network calls")
-    and "Security and privacy" bullets ("No network requests…").
-  - ⚠ docs/decisions/0001-brownfield-stack-android-local-only.md — mark partly superseded by
-    ADR-0013.
-  - ⚠ docs/architecture/data-model.md — add the account/sync section.
-  - ⚠ android/app/src/main/AndroidManifest.xml — INTERNET comment still says google_fonts.
-  - ✅ .specify/templates/plan-template.md — Constitution Check reads principles at runtime; no
-    change needed.
-- Deferred TODOs:
-  - TODO(APPROVAL): the lead approves or rejects this amendment (and ADR-0013) in chat; on
-    approval set "Ratified/Last Amended", delete this report and update the files above.
-  - Resolved 2026-11-27 (spec 016 clarify): no age gate; notice advises under-16s to ask a
-    parent. The lead accepted this knowingly; see ADR-0013 "Risks".
--->
-
 # DisGret Constitution
 
 ## Core Principles
@@ -194,5 +166,4 @@ impact before touching shared code.
   block implementation.
 - The project lead (repository owner) approves amendments.
 
-**Version**: 2.0.0 (Proposed, not in force until the project lead approves; 1.0.0 applies until
-then) | **Ratified**: 2026-11-22 | **Last Amended**: TODO(APPROVAL): date of approval
+**Version**: 2.0.0 | **Ratified**: 2026-11-22 | **Last Amended**: 2026-11-28

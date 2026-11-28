@@ -70,7 +70,8 @@ Called from `HiveRepository.save/delete` and from the profile-box repositories' 
 enum MergeAction { applyRemote, keepLocal, skip }
 MergeAction resolve({required SyncMeta? local, required SyncRecord remote});
 FirstLoginResult decideFirstLogin({...}); // table in data-model.md
-Map<String, dynamic> stripPhoneOnly(String box, String key, Map<String, dynamic> data);
+Map<String, dynamic> toRemoteData(String box, String key, dynamic value);  // allow-list (R5/R6)
+dynamic fromRemoteData(String box, String key, Map<String, dynamic> data, dynamic localValue);
 String authErrorMessage(String code);    // R10 table → AppStrings
 ```
 

@@ -31,9 +31,10 @@ is shown.
 
 ## SignUpScreen
 
-1. Privacy notice (one scroll screen): what leaves the phone (email; goals, habits, logs, study
-   sessions, quiz results, tên gọi, Góc của Gret, nơi học), where (máy chủ Google Firebase ở
-   Singapore), what never leaves (danh sách app chặn, lịch sử xem reel và Reset break), no ads or
+1. Privacy notice (one scroll screen): what leaves the phone (email; mục tiêu, thói quen, lịch sử
+   ghi nhận, phiên học; kết quả quiz động lực và độ dài reel ưa thích; đã xem giới thiệu và cấp
+   thành tích đã chúc mừng; Góc của Gret; nơi học), where (máy chủ Google Firebase ở Singapore),
+   what never leaves (tên gọi, danh sách app chặn, lịch sử xem reel và Reset break), no ads or
    tracking, "Xoá tài khoản" deletes everything online, and "Nếu bạn dưới 16 tuổi, hãy hỏi ý kiến
    bố mẹ trước khi tạo tài khoản". Buttons: "Tôi đã đọc và đồng ý" (primary), "Để sau".
 2. Form: Email, Mật khẩu (≥ 8, show/hide), button "Tạo tài khoản". On success → first-login flow

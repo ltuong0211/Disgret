@@ -1,7 +1,7 @@
 # ADR-0013: Optional online accounts on one backend, local-first sync
 
-- Status: Proposed (needs the project lead's approval together with constitution 2.0.0)
-- Date: 2026-11-27
+- Status: Accepted (project lead, chat 2026-11-28, together with constitution 2.0.0)
+- Date: 2026-11-27 (accepted 2026-11-28)
 - Related: constitution Principle II (amendment 1.0.0 → 2.0.0), ADR-0001 (Android, local only —
   partly superseded once this is accepted), ADR-0012 (display name), spec 016
   (`specs/016-online-accounts/`)
@@ -62,12 +62,18 @@ pricing change effective 2026-09-01.
    When signed in, a sync service pushes local changes and pulls remote ones per record with
    last-write-wins on an `updatedAt` timestamp; Firestore's own offline cache is not relied on.
    Details in `specs/016-online-accounts/research.md` and `data-model.md`.
-5. **What syncs** (Firestore path `users/{uid}/…`): goals, habits, habit logs, sessions, and the
-   study-related profile fields (motivation types, preferred formats and reel length, display name
-   if the user set one, Góc của Gret choices, study place). **Never synced:** the blocked-app list,
-   installed apps, `events` (reel views, interventions, distractions), demo mode, notification
-   permission flags. The exact field list is fixed in spec 016 and must be updated here before a
-   field is added.
+5. **What syncs** (Firestore path `users/{uid}/…`) — an **allow-list**; anything not named here
+   stays on the phone:
+   - every record of the `goals`, `habits`, `habit_logs` and `sessions` boxes;
+   - profile box keys `onboarding_done`, `celebrated_level`, `study_place`, `corner_owned`,
+     `corner_worn`, `corner_sea`, `corner_mascot`;
+   - inside the profile `user` map only `motivationTypes`, `preferredReelLength` and
+     `quizAnswers` (spec 015 quiz answers: question id → answer ids, no free text).
+
+   **Never synced:** the display name (stays phone-only, ADR-0012 unchanged — lead's decision
+   2026-11-28), demo mode, the blocked-app list, installed apps, `events` (reel views,
+   interventions, distractions), notification permission flags. A new field or key leaves the
+   phone only after it is added to this list (constitution Principle II).
 6. **Data minimisation and age:** the account stores only the email (Firebase also keeps its own
    user id, password hash and sign-in timestamps) and the synced data above. No real name, age,
    birth date, school, phone or photo. Per the lead's decision there is **no age gate**: the
@@ -76,7 +82,9 @@ pricing change effective 2026-09-01.
    is kept as guest data unless the user also chooses to delete it.
 8. **Config and secrets:** the lead creates the Firebase project and supplies its four Android
    app values (API key, app id, project id, sender id) in a git-ignored `firebase.env.json` passed
-   with `--dart-define-from-file`. No `google-services.json` and no Gradle Google-services plugin
+   with `--dart-define-from-file`. The lead may run `flutterfire configure` to register the app
+   and read the values from the generated files, but those generated files
+   (`lib/firebase_options.dart`, `android/app/google-services.json`) are git-ignored and unused. No `google-services.json` and no Gradle Google-services plugin
    are used, so nothing in the repository depends on the config. Without it the app builds and runs
    with the account feature hidden, so CI keeps building without secrets. The Firestore Security
    Rules file (`firestore.rules`) holds no secret and is committed. Agents never create cloud
