@@ -9,6 +9,7 @@ import 'package:focus_app/data/models/goal.dart';
 import 'package:focus_app/data/models/habit.dart';
 import 'package:focus_app/data/models/habit_log.dart';
 import 'package:focus_app/data/models/motivation_type.dart';
+import 'package:focus_app/data/models/reel_labels.dart';
 import 'package:focus_app/data/models/session.dart';
 import 'package:focus_app/data/models/user_profile.dart';
 import 'package:focus_app/data/repositories/event_repository.dart';
@@ -397,16 +398,43 @@ void main() {
         const UserProfile(motivationTypes: [MotivationType.career], preferredReelLength: 60),
       );
 
-      await profile.updateMotivationTypes(const [MotivationType.money, MotivationType.freedom]);
+      await profile.saveQuizAnswers(const {
+        'q1': ['q1.money'],
+        'q2': ['q2.freedom'],
+      });
 
       final current = container.read(profileProvider);
       expect(current?.motivationTypes, [MotivationType.money, MotivationType.freedom]);
       expect(current?.preferredReelLength, 60);
+      expect(current?.quizAnswers['q1'], ['q1.money']);
       expect(ProfileRepository().profile?.motivationTypes, [
         MotivationType.money,
         MotivationType.freedom,
       ]);
+      expect(ProfileRepository().profile?.quizAnswers['q2'], ['q2.freedom']);
       expect(ProfileRepository().isOnboardingDone, isTrue);
+    });
+
+    test('Giúp app hiểu bạn hơn: merges the extra answers and keeps old reasons first', () async {
+      final profile = container.read(profileProvider.notifier);
+      await profile.completeOnboarding(
+        const UserProfile(motivationTypes: [MotivationType.career], preferredReelLength: 30),
+      );
+
+      await profile.saveQuizAnswers(const {
+        'q3': ['q3.growth'],
+        'q4': ['q4.growth'],
+        'q6': ['q6.peer'],
+      }, merge: true);
+
+      final current = container.read(profileProvider)!;
+      expect(current.motivationTypes, [MotivationType.growth, MotivationType.career]);
+      expect(current.preferences.messengers, [Messenger.peer]);
+
+      await profile.saveQuizAnswers(const {
+        'q7': ['q7.calm'],
+      }, merge: true);
+      expect(container.read(profileProvider)!.quizAnswers.keys, containsAll(['q3', 'q6', 'q7']));
     });
   });
 

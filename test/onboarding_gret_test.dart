@@ -43,13 +43,8 @@ Future<void> _toQuiz(WidgetTester tester) async {
 Finder get _nameQuestion =>
     find.descendant(of: find.byType(ThoughtBubble), matching: find.text(AppStrings.nameQuestion));
 
-/// Two "career" and two "prove yourself" answers.
-Future<void> _answerQuiz(WidgetTester tester) async {
-  await tapAndSettle(tester, find.text('Có công việc mình thật sự muốn làm'));
-  await tapAndSettle(tester, find.text('Đang ở đúng vị trí mình mơ ước'));
-  await tapAndSettle(tester, find.text('Không muốn thua chính mình'));
-  await tapAndSettle(tester, find.text('Niềm tin rằng mình làm được'));
-}
+/// The 7 core questions (spec 015).
+Future<void> _answerQuiz(WidgetTester tester) => answerCoreQuiz(tester);
 
 /// From the first story page to the first-goal page, keeping the suggested apps.
 Future<void> _toFirstGoal(WidgetTester tester) async {
@@ -223,7 +218,7 @@ void main() {
       );
       await tapAndSettle(tester, find.text('60 giây'));
       await tapAndSettle(tester, find.text(AppStrings.continueLabel));
-      expect(find.text('Câu 1/4'), findsOneWidget);
+      expect(find.text('Câu 1/7'), findsOneWidget);
 
       await tapAndSettle(tester, find.text(AppStrings.back));
       expect(tester.getSemantics(find.text('60 giây')), isSemantics(isSelected: true));
@@ -253,7 +248,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Câu 1/4'), findsOneWidget);
+      expect(find.text('Câu 1/7'), findsOneWidget);
       expect(find.byKey(const ValueKey('quiz-step-dots')), findsOneWidget);
       expect(_gretMood(tester), MascotMood.neutral);
     });
@@ -266,7 +261,7 @@ void main() {
       await tester.tap(find.text('Có công việc mình thật sự muốn làm'));
       await tester.pump();
       expect(
-        find.text('Câu 1/4'),
+        find.text('Câu 1/7'),
         findsOneWidget,
         reason: 'Still on the question during the reaction',
       );
@@ -276,7 +271,7 @@ void main() {
       await tester.tap(find.text('Làm người thân tự hào và yên tâm'));
       await tester.pump(AppMotion.reaction);
       await tester.pump();
-      expect(find.text('Câu 2/4'), findsOneWidget);
+      expect(find.text('Câu 2/7'), findsOneWidget);
       expect(_gretMood(tester), MascotMood.neutral);
 
       // Back shows the first answer, not the second tap.

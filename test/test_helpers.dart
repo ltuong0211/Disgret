@@ -168,6 +168,32 @@ Future<void> tapAndSettle(WidgetTester tester, Finder finder) async {
   await tester.pumpAndSettle();
 }
 
+/// 1.1 Quiz (spec 015): "Không chắc" (or the question's own skip text) stores no answer.
+Future<void> skipQuizQuestion(WidgetTester tester) =>
+    tapAndSettle(tester, find.byKey(const ValueKey('quiz-unsure')));
+
+/// Answers the 7 core questions of onboarding: reasons career then prove yourself, the
+/// "journey" format (multi choice + Tiếp), a calm tone, and skips the last three.
+Future<void> answerCoreQuiz(WidgetTester tester) async {
+  await tapAndSettle(tester, find.text('Có công việc mình thật sự muốn làm'));
+  await tapAndSettle(tester, find.text('Trở thành người mà trước đây ít ai tin'));
+  await tapAndSettle(tester, find.text('Hành trình từ con số 0 đến thành công'));
+  await tapAndSettle(tester, find.byKey(const ValueKey('quiz-next')));
+  await tapAndSettle(tester, find.text('Nhẹ nhàng, ấm áp, không áp lực'));
+  for (var i = 0; i < 3; i++) {
+    await skipQuizQuestion(tester);
+  }
+}
+
+/// Answers all 11 questions of "Làm lại quiz động lực": career and prove yourself, the rest skipped.
+Future<void> answerFullQuiz(WidgetTester tester) async {
+  await tapAndSettle(tester, find.text('Có công việc mình thật sự muốn làm'));
+  await tapAndSettle(tester, find.text('Trở thành người mà trước đây ít ai tin'));
+  for (var i = 0; i < 9; i++) {
+    await skipQuizQuestion(tester);
+  }
+}
+
 /// 2.2 Nhắc giờ học (spec 009): records every plan applied and every permission request.
 class FakeReminderService implements ReminderService {
   final List<List<PlannedReminder>> plans = [];

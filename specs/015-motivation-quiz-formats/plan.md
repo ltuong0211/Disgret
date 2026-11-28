@@ -107,3 +107,21 @@ test/
 ## Complexity Tracking
 
 No constitution violations.
+
+## Revision 2026-11-27
+
+The lead approved [quiz-and-tags-design.md](quiz-and-tags-design.md). It replaces the earlier
+choices in this plan where they differ:
+
+- New files: `lib/data/models/reel_labels.dart` (label enums), `lib/data/models/reel_preferences.dart`
+  (stored quiz answers → preferences, pure). `video_format.dart` is not created; `VideoFormat`
+  lives in `reel_labels.dart`.
+- Changed: `motivation_type.dart` (+2 reasons), `reel.dart` (labels), `user_profile.dart`
+  (`quizAnswers`), `motivation_quiz.dart` (11 questions with ids and parts),
+  `reel_recommender.dart` (filter, weights, variety), `quiz_question_view.dart` (multi choice,
+  "Không chắc"), `onboarding_screen.dart` (core part), `quiz_screen.dart` (all / extra part),
+  `settings_screen.dart` (summary, extra-part entry), `app_providers.dart`
+  (`saveQuizAnswers` replaces `updateMotivationTypes`).
+- Constitution check unchanged: rule-based, on-device, no new permission or dependency, no
+  identifying question (FR-014). Data change is additive (new optional key, new enum values).
+- Data model and tasks: [data-model.md](data-model.md), [tasks.md](tasks.md).

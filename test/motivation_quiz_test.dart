@@ -11,11 +11,20 @@ void main() {
   const freedom = MotivationType.freedom;
 
   group('Nội dung quiz', () {
-    test('Có đúng 4 câu hỏi', () {
-      expect(motivationQuestions, hasLength(4));
+    test('11 questions: 7 in the core part, 4 in the extra part (spec 015)', () {
+      expect(quizQuestions, hasLength(11));
+      expect(coreQuestions.map((q) => q.id), ['q1', 'q2', 'q5', 'q7', 'q9', 'q10', 'q11']);
+      expect(extraQuestions.map((q) => q.id), ['q3', 'q4', 'q6', 'q8']);
+      expect(coreQuestions.every((q) => q.part == QuizPart.core), isTrue);
+      expect(extraQuestions.every((q) => q.part == QuizPart.extra), isTrue);
     });
 
-    test('Câu nào cũng có đủ 5 loại động lực, mỗi loại một đáp án', () {
+    test('Có đúng 4 câu về lý do học', () {
+      expect(motivationQuestions, hasLength(4));
+      expect(motivationQuestions.every((q) => q.isReason), isTrue);
+    });
+
+    test('Câu lý do nào cũng có đủ 7 loại động lực, mỗi loại một đáp án', () {
       for (final question in motivationQuestions) {
         final types = question.answers.map((answer) => answer.type);
         expect(types, unorderedEquals(MotivationType.values), reason: question.text);
@@ -24,9 +33,56 @@ void main() {
 
     test('Thứ tự đáp án thay đổi giữa các câu để không lộ quy luật', () {
       final orders = motivationQuestions
-          .map((question) => question.answers.map((answer) => answer.type.name).join(','))
+          .map((question) => question.answers.map((answer) => answer.type!.name).join(','))
           .toSet();
       expect(orders, hasLength(motivationQuestions.length));
+    });
+
+    test('Question and answer ids are unique and prefixed by their question', () {
+      final questionIds = quizQuestions.map((q) => q.id).toList();
+      expect(questionIds.toSet(), hasLength(questionIds.length));
+      final answerIds = [
+        for (final question in quizQuestions)
+          for (final answer in question.answers) answer.id,
+      ];
+      expect(answerIds.toSet(), hasLength(answerIds.length));
+      for (final question in quizQuestions) {
+        for (final answer in question.answers) {
+          expect(answer.id, startsWith('${question.id}.'));
+        }
+      }
+    });
+
+    test('Every non-reason answer carries at least one label', () {
+      for (final question in quizQuestions.where((q) => !q.isReason)) {
+        for (final answer in question.answers) {
+          final labels =
+              answer.formats.length +
+              answer.messengers.length +
+              answer.themes.length +
+              answer.flags.length +
+              answer.languages.length +
+              (answer.tone == null ? 0 : 1) +
+              (answer.goal == null ? 0 : 1);
+          expect(labels, greaterThan(0), reason: answer.id);
+        }
+      }
+    });
+
+    test('Choice limits follow the design: q5, q6, q9 up to 2; q11 all; others single', () {
+      final limits = {for (final q in quizQuestions) q.id: q.maxChoices};
+      expect(limits['q5'], 2);
+      expect(limits['q6'], 2);
+      expect(limits['q9'], 2);
+      expect(limits['q11'], questionById('q11')!.answers.length);
+      for (final id in ['q1', 'q2', 'q3', 'q4', 'q7', 'q8', 'q10']) {
+        expect(limits[id], 1, reason: id);
+      }
+    });
+
+    test('questionById: unknown id → null', () {
+      expect(questionById('q5')?.id, 'q5');
+      expect(questionById('q99'), isNull);
     });
   });
 

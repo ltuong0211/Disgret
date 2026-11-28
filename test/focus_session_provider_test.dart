@@ -863,7 +863,7 @@ void main() {
       expect(ProfileRepository().profile?.demoMode, isTrue);
       expect(ProfileRepository().profile?.preferredReelLength, 60);
 
-      await container.read(profileProvider.notifier).updateMotivationTypes(const []);
+      await container.read(profileProvider.notifier).saveQuizAnswers(const {});
       expect(ProfileRepository().profile?.demoMode, isTrue, reason: 'Làm lại quiz không tắt demo');
     });
 
