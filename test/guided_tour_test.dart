@@ -12,6 +12,7 @@ import 'package:focus_app/data/repositories/habit_repository.dart';
 import 'package:focus_app/data/repositories/profile_repository.dart';
 import 'package:focus_app/l10n/app_strings.dart';
 import 'package:focus_app/router/app_router.dart';
+import 'package:focus_app/widgets/tour/guided_tour_overlay.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:material_ui/material_ui.dart';
@@ -76,6 +77,12 @@ void main() {
 
       expect(_title(0), findsOneWidget);
       expect(find.byType(BackdropFilter), findsOneWidget);
+      // The spotlight is measured on the first step too, and only its outline glows: a filled
+      // glow once hid the feature being shown (lead's report, 2026-11-28).
+      expect(
+        find.byWidgetPredicate((w) => w is CustomPaint && w.painter is SpotlightGlowPainter),
+        findsOneWidget,
+      );
       expect(find.text(AppStrings.tourProgress(1, GuidedTour.steps.length)), findsOneWidget);
       // The screen underneath cannot be pressed: a tap anywhere outside the card goes on.
       await tester.tap(find.byTooltip(AppStrings.settings), warnIfMissed: false);

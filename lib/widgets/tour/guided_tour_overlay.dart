@@ -57,6 +57,8 @@ class _GuidedTourOverlayState extends ConsumerState<GuidedTourOverlay> {
       final topLeft = targetBox.localToGlobal(Offset.zero, ancestor: overlayBox);
       setState(() => _hole = (topLeft & targetBox.size).inflate(AppTour.spotlightPadding));
     });
+    // Without a scroll there may be no next frame to run the callback above.
+    WidgetsBinding.instance.scheduleFrame();
   }
 
   void _next(int step) {
@@ -116,17 +118,9 @@ class _GuidedTourOverlayState extends ConsumerState<GuidedTourOverlay> {
               if (hole != null)
                 Positioned.fromRect(
                   rect: hole,
-                  child: IgnorePointer(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppTour.spotlightRadius),
-                        border: Border.all(color: AppColors.tourGlow, width: AppTour.glowWidth),
-                        boxShadow: const [
-                          BoxShadow(color: AppColors.tourGlow, blurRadius: AppTour.glowBlur),
-                        ],
-                      ),
-                    ),
-                  ),
+                  // Only the outline glows: a BoxShadow would fill the inside and hide the
+                  // feature being shown.
+                  child: const IgnorePointer(child: CustomPaint(painter: SpotlightGlowPainter())),
                 ),
               _placeCard(
                 constraints.biggest,
@@ -176,6 +170,34 @@ class _GuidedTourOverlayState extends ConsumerState<GuidedTourOverlay> {
       ),
     );
   }
+}
+
+/// The glowing outline of the spotlight: a soft blurred stroke plus a crisp one, nothing inside.
+class SpotlightGlowPainter extends CustomPainter {
+  const SpotlightGlowPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final outline = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      const Radius.circular(AppTour.spotlightRadius),
+    );
+    final glow = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = AppTour.glowWidth * 2
+      ..color = AppColors.tourGlow
+      ..maskFilter = const MaskFilter.blur(BlurStyle.outer, AppTour.glowBlur / 2);
+    final edge = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = AppTour.glowWidth
+      ..color = AppColors.tourGlow;
+    canvas
+      ..drawRRect(outline, glow)
+      ..drawRRect(outline, edge);
+  }
+
+  @override
+  bool shouldRepaint(SpotlightGlowPainter oldDelegate) => false;
 }
 
 /// Everything except a rounded hole around the feature being shown.

@@ -36,7 +36,10 @@ void main() {
 
   setUp(() async {
     await openMemoryBoxes();
-    now = DateTime.now();
+    // Mid-morning: late at night Gret sleeps (spec 021), which would make these checks depend on
+    // the hour the tests run.
+    final today = DateTime.now();
+    now = DateTime(today.year, today.month, today.day, 10);
     VideoPlayerPlatform.instance = FakeVideoPlayerPlatform();
     await ProfileRepository().completeOnboarding(
       const UserProfile(motivationTypes: [MotivationType.career], preferredReelLength: 30),
