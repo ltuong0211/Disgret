@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:focus_app/app.dart';
 import 'package:focus_app/data/hive_boxes.dart';
@@ -60,6 +61,7 @@ Future<void> pumpApp(
   List<Reel>? reels,
   FakeReminderService? reminders,
   bool launchScreen = false,
+  List<Override> overrides = const [],
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -80,6 +82,7 @@ Future<void> pumpApp(
         // The launch screen (spec 011) covers the app for 1.4 s; only its own tests turn it on.
         launchScreenProvider.overrideWithValue(launchScreen),
         if (clock != null) clockProvider.overrideWithValue(clock),
+        ...overrides,
       ],
       child: const DisGretApp(),
     ),

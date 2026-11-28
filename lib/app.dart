@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'data/models/reel.dart';
+import 'providers/account_providers.dart';
 import 'providers/app_providers.dart';
 import 'data/reminder_plan.dart';
 import 'providers/focus_session_provider.dart';
@@ -36,6 +37,8 @@ class _DisGretAppState extends ConsumerState<DisGretApp> {
         ref.read(todayProvider.notifier).refresh();
         ref.read(focusSessionProvider.notifier).onAppResumed();
         _saveNativeEvents();
+        // 6.3 Catch up with the account after being away (spec 016 FR-015).
+        ref.read(accountActionsProvider).syncNow();
       },
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -43,6 +46,7 @@ class _DisGretAppState extends ConsumerState<DisGretApp> {
       ref.read(nativeBridgeProvider).listenForActions(_onNativeAction);
       _saveNativeEvents();
       _applyReminders(ref.read(reminderPlanProvider));
+      ref.read(accountActionsProvider).onAppStart();
       // 2.2 A tapped reminder leads to Hôm nay, where "Bắt đầu" is (spec 009 US1).
       ref
           .read(reminderServiceProvider)

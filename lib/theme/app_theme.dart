@@ -770,6 +770,13 @@ class AppIcons {
   static const IconData reels = Icons.play_circle_outline_rounded;
   static const IconData focus = Icons.timer_outlined;
   static const IconData name = Icons.badge_outlined;
+  // 6.3 Tài khoản và đồng bộ (spec 016).
+  static const IconData account = Icons.account_circle_outlined;
+  static const IconData sync = Icons.sync_rounded;
+  static const IconData signOut = Icons.logout_rounded;
+  static const IconData showPassword = Icons.visibility_outlined;
+  static const IconData hidePassword = Icons.visibility_off_outlined;
+  static const IconData privacy = Icons.lock_outline_rounded;
 
   /// 5.6 Study places: Gret's sea and Quán San Hô.
   static const IconData sea = Icons.waves_rounded;

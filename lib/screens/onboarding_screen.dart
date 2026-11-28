@@ -14,6 +14,7 @@ import '../data/models/reel_preferences.dart';
 import '../data/motivation_quiz.dart';
 import '../data/repositories/blocked_apps_repository.dart';
 import '../l10n/app_strings.dart';
+import '../providers/account_providers.dart';
 import '../providers/app_providers.dart';
 import '../providers/sea_providers.dart';
 import '../router/app_router.dart';
@@ -430,7 +431,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
 
   Widget _buildButtons() {
     if (_isStory) {
-      return GradientPillButton(label: AppStrings.continueLabel, onPressed: _goNext);
+      final next = GradientPillButton(label: AppStrings.continueLabel, onPressed: _goNext);
+      // 6.3 A secondary link for students who already have an account (spec 016 FR-002).
+      if (_step != 0 || !ref.watch(accountsAvailableProvider)) return next;
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          next,
+          TextButton(
+            onPressed: () => context.push(AppRoutes.accountSignIn),
+            child: const Text(AppStrings.accountHaveAccount),
+          ),
+        ],
+      );
     }
 
     // Ở trang quiz, chọn thẻ là tự sang câu tiếp nên không cần nút đi tiếp.

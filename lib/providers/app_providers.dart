@@ -495,15 +495,16 @@ class AppDataActions {
     await _ref
         .read(profileRepositoryProvider)
         .saveCelebratedLevel(Achievements.levelFor(Achievements.totalCompletions(histories)));
-    _reloadAll();
+    reloadAll();
   }
 
   Future<void> clearAll() async {
     await HiveBoxes.clearUserData();
-    _reloadAll();
+    reloadAll();
   }
 
-  void _reloadAll() {
+  /// Re-reads everything from Hive, after a reset or after account data was replaced (6.3).
+  void reloadAll() {
     _ref.invalidate(profileProvider);
     _ref.invalidate(goalsProvider);
     _ref.invalidate(habitsProvider);

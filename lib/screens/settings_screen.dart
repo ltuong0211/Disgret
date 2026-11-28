@@ -8,9 +8,11 @@ import '../data/models/reel_labels.dart';
 import '../data/models/reel_preferences.dart';
 import '../data/models/user_profile.dart';
 import '../l10n/app_strings.dart';
+import '../providers/account_providers.dart';
 import '../providers/app_providers.dart';
 import '../providers/focus_session_provider.dart';
 import '../router/app_router.dart';
+import 'account_screen.dart';
 import '../services/focus_session_timer.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_dialogs.dart';
@@ -39,7 +41,10 @@ class SettingsScreen extends ConsumerWidget {
     );
     if (!confirmed) return;
 
+    // 6.3 Signed in: sign out on this phone only; the account's online data stays (spec 016).
+    await ref.read(accountActionsProvider).signOutLocally();
     await actions.clearAll();
+    ref.read(accountStateProvider.notifier).refresh();
     ref.invalidate(focusSessionProvider); // Phiên đang chạy (nếu có) cũng bị huỷ.
     if (!context.mounted) return;
     context.go(AppRoutes.onboarding);
@@ -66,6 +71,11 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
+          // 6.3 Tài khoản (spec 016 FR-002, FR-017): hidden when the build has no backend.
+          if (ref.watch(accountsAvailableProvider)) ...[
+            const _AccountRow(),
+            const SizedBox(height: AppSpacing.sm),
+          ],
           // 5.1 Tên gọi (spec 007): only for the greeting on Hôm nay.
           Card(
             child: ListTile(
@@ -274,6 +284,37 @@ class _NameDialogState extends State<_NameDialog> {
           child: const Text(AppStrings.save),
         ),
       ],
+    );
+  }
+}
+
+/// 6.3 "Tài khoản" with the email and sync status, or the guest note (contracts/account-ui.md).
+class _AccountRow extends ConsumerWidget {
+  const _AccountRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final account = ref.watch(accountStateProvider);
+    final status = ref.watch(syncStatusProvider);
+    final notice = ref.watch(accountNoticeProvider);
+    final subtitle =
+        notice ??
+        switch (account.kind) {
+          AccountKind.signedIn => syncStatusLabel(status),
+          AccountKind.signInAgain => AppStrings.accountSignInAgain,
+          AccountKind.guest || AccountKind.unavailable => AppStrings.accountGuestSubtitle,
+        };
+    return Card(
+      child: ListTile(
+        leading: const Icon(AppIcons.account),
+        title: Text(account.isSignedIn ? account.email : AppStrings.accountTitle),
+        subtitle: Text(subtitle),
+        trailing: const Icon(AppIcons.next),
+        onTap: () {
+          ref.read(accountNoticeProvider.notifier).show(null);
+          context.push(AppRoutes.account);
+        },
+      ),
     );
   }
 }

@@ -6,10 +6,13 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../data/models/reel.dart';
+import '../providers/account_providers.dart';
 import '../providers/app_providers.dart';
 import '../providers/focus_session_provider.dart';
+import '../screens/account_screen.dart';
 import '../screens/blocked_apps_screen.dart';
 import '../screens/focus_screen.dart';
+import '../screens/forgot_password_screen.dart';
 import '../screens/habit_detail_screen.dart';
 import '../screens/habit_form_screen.dart';
 import '../screens/habits_screen.dart';
@@ -22,6 +25,8 @@ import '../screens/sea_map_screen.dart';
 import '../screens/motivation_screen.dart';
 import '../screens/reset_break_permissions_screen.dart';
 import '../screens/settings_screen.dart';
+import '../screens/sign_in_screen.dart';
+import '../screens/sign_up_screen.dart';
 import '../screens/progress_screen.dart';
 import '../screens/summary_screen.dart';
 import '../screens/today_screen.dart';
@@ -52,6 +57,16 @@ class AppRoutes {
   static const String habitDetailPath = '/habit/:id';
   static const String habitFormPath = '/habit-form';
   static const String myHabits = '/my-habits';
+
+  /// 6.3 Tài khoản (spec 016, contracts/account-ui.md).
+  static const String account = '/account';
+  static const String accountSignIn = '/account/sign-in';
+  static const String accountSignUp = '/account/sign-up';
+  static const String accountForgotPassword = '/account/forgot-password';
+
+  /// Sign-in with the email filled in.
+  static String accountSignInWith(String email) =>
+      Uri(path: accountSignIn, queryParameters: {'email': email}).toString();
 
   /// 5.4 Góc của Gret: wardrobe, seas and mascots (spec 004).
   static const String gretCorner = '/gret-corner';
@@ -85,7 +100,13 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final location = state.matchedLocation;
       final atOnboarding = location == AppRoutes.onboarding;
-      if (!profile.isOnboardingDone && !atOnboarding) return AppRoutes.onboarding;
+      // 6.3 Account screens exist only when accounts are available (FR-003); "Đã có tài khoản?"
+      // on onboarding's first page opens them before the intro is done.
+      final atAccount = location.startsWith(AppRoutes.account);
+      if (atAccount && !ref.read(accountsAvailableProvider)) {
+        return profile.isOnboardingDone ? AppRoutes.settings : AppRoutes.onboarding;
+      }
+      if (!profile.isOnboardingDone && !atOnboarding && !atAccount) return AppRoutes.onboarding;
       if (profile.isOnboardingDone && atOnboarding) return AppRoutes.today;
 
       final phase = ref.read(focusSessionProvider).phase;
@@ -156,6 +177,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: AppRoutes.myHabits, builder: (context, state) => const MyHabitsScreen()),
       GoRoute(path: AppRoutes.gretCorner, builder: (context, state) => const GretCornerScreen()),
       GoRoute(path: AppRoutes.seaMap, builder: (context, state) => const SeaMapScreen()),
+      GoRoute(path: AppRoutes.account, builder: (context, state) => const AccountScreen()),
+      GoRoute(
+        path: AppRoutes.accountSignIn,
+        builder: (context, state) => SignInScreen(email: state.uri.queryParameters['email'] ?? ''),
+      ),
+      GoRoute(path: AppRoutes.accountSignUp, builder: (context, state) => const SignUpScreen()),
+      GoRoute(
+        path: AppRoutes.accountForgotPassword,
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
       GoRoute(
         path: AppRoutes.habitDetailPath,
         builder: (context, state) => HabitDetailScreen(habitId: state.pathParameters['id']!),

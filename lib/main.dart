@@ -1,5 +1,7 @@
 // 5.1 Điểm khởi động: mở Hive (6.2) rồi chạy giao diện.
-import 'package:flutter/foundation.dart' show LicenseEntryWithLineBreaks, LicenseRegistry;
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart'
+    show LicenseEntryWithLineBreaks, LicenseRegistry, debugPrint;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +10,8 @@ import 'package:material_ui/material_ui.dart';
 
 import 'app.dart';
 import 'data/hive_boxes.dart';
+import 'services/accounts_config.dart';
+import 'services/firestore_remote_store.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +32,18 @@ Future<void> main() async {
 
   await Hive.initFlutter();
   await HiveBoxes.openAll();
+
+  // 6.3 Optional accounts (spec 016, ADR-0013): only when this build carries the Firebase settings.
+  // If Firebase cannot start, the app runs as before with accounts hidden.
+  if (AccountsConfig.isConfigured) {
+    try {
+      await Firebase.initializeApp(options: AccountsConfig.options);
+      FirestoreRemoteStore.configure();
+      AccountsConfig.ready = true;
+    } on Object catch (error) {
+      debugPrint('Accounts unavailable: Firebase did not start ($error)');
+    }
+  }
 
   runApp(const ProviderScope(child: DisGretApp()));
 }
