@@ -187,6 +187,14 @@ class AppStrings {
       'Tới giờ $habit rồi, chỉ $minutes phút thôi. Mình bắt đầu nhé?';
   static const String reminderChannel = 'Nhắc giờ học';
 
+  // ---------- 4.1 Lịch của thói quen (spec 024) ----------
+  static const String scheduleTitle = 'Lịch';
+  static const String scheduleStart = 'Bắt đầu lúc';
+  static const String scheduleChangeTime = 'Đổi giờ bắt đầu';
+  static const String scheduleLength = 'Kéo dài (tối thiểu)';
+  static const String scheduleRemind = 'Nhắc khi tới giờ';
+  static const String firstHabitTime = 'Học lúc';
+
   /// Spec 023: at the reminder time, a distracting app on screen is covered.
   static const String reminderInterruptTitle = 'Chặn app gây xao nhãng khi tới giờ';
   static const String reminderInterruptHint =

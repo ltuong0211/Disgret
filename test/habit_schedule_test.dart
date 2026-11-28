@@ -224,6 +224,35 @@ void main() {
       final evening = Habit.fromMap({..._habit().toMap(), 'timeOfDay': 'evening'});
       expect(HabitSchedule.describe(evening), 'Hằng ngày · Tối');
     });
+
+    // Spec 024: a habit is scheduled like a calendar event, with a start time and a length.
+    test('with a start time, the card shows the time range instead of the part of day', () {
+      final timed = Habit.fromMap({
+        ..._habit(repeat: HabitRepeat.weekly, weekdays: [1, 3, 5]).toMap(),
+        'timeOfDay': 'evening',
+        'hasStartTime': true,
+        'reminderTime': '20:00',
+      });
+      expect(HabitSchedule.describe(timed), 'T2, T4, T6 · 20:00 – 20:25');
+      expect(HabitSchedule.timeRange(timed), '20:00 – 20:25');
+      expect(HabitSchedule.timeRange(_habit()), isNull);
+    });
+
+    test('end time wraps past midnight; the part of day follows the hour', () {
+      expect(HabitSchedule.endTime('23:50', 25), '00:15');
+      expect(HabitSchedule.endTime('07:05', 5), '07:10');
+      expect(HabitSchedule.timeOfDayFor(6), HabitTimeOfDay.morning);
+      expect(HabitSchedule.timeOfDayFor(11), HabitTimeOfDay.morning);
+      expect(HabitSchedule.timeOfDayFor(12), HabitTimeOfDay.afternoon);
+      expect(HabitSchedule.timeOfDayFor(17), HabitTimeOfDay.afternoon);
+      expect(HabitSchedule.timeOfDayFor(18), HabitTimeOfDay.evening);
+      expect(HabitSchedule.timeOfDayFor(2), HabitTimeOfDay.evening);
+    });
+
+    test('habits saved before spec 024 read without a start time', () {
+      final old = Habit.fromMap(_habit().toMap()..remove('hasStartTime'));
+      expect(old.hasStartTime, isFalse);
+    });
   });
 
   group('Danh mục icon', () {

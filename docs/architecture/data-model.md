@@ -76,3 +76,6 @@ id of one is added to `corner_owned` when it is first chosen, so it stays chosen
   the ADR-0013 allow-list).
 - Habit `reminderInterrupt` (feature 023): bool, missing → false; at the reminder time a blocked app
   on screen is covered by Gret (Android only). Synced with the habit record.
+- Habit `hasStartTime` (feature 024): bool, missing → false. True means the habit is scheduled at
+  `reminderTime` like a calendar event lasting `minMinutesPerDay`; `timeOfDay` then follows the hour
+  (06–11 morning, 12–17 afternoon, otherwise evening). Cards show "T2, T4, T6 · 20:00 – 20:25".

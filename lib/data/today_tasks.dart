@@ -10,8 +10,8 @@ class TodayTask {
   final Habit habit;
   final bool done;
 
-  /// "HH:mm" when the habit has its reminder on; null otherwise.
-  String? get time => habit.reminderEnabled ? habit.reminderTime : null;
+  /// "HH:mm" when the habit has a start time (spec 024) or its reminder on; null otherwise.
+  String? get time => habit.hasStartTime || habit.reminderEnabled ? habit.reminderTime : null;
 }
 
 abstract final class TodayTasks {

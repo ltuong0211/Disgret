@@ -109,9 +109,32 @@ class HabitSchedule {
     }
   }
 
-  /// Mô tả ngắn lịch của thói quen để hiện trên thẻ, ví dụ "T2, T4, T6 · Tối".
+  /// 4.1 Spec 024: "20:00 – 20:25" for a habit with a start time; null otherwise.
+  static String? timeRange(Habit habit) => habit.hasStartTime
+      ? '${habit.reminderTime} – ${endTime(habit.reminderTime, habit.minMinutesPerDay)}'
+      : null;
+
+  /// "HH:mm" [minutes] after [start] ("HH:mm"), wrapping past midnight.
+  static String endTime(String start, int minutes) {
+    final parts = start.split(':');
+    final total = (int.parse(parts[0]) * 60 + int.parse(parts[1]) + minutes) % (24 * 60);
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(total ~/ 60)}:${two(total % 60)}';
+  }
+
+  /// The part of day a start hour falls in: 06–11 sáng, 12–17 chiều, otherwise tối.
+  static HabitTimeOfDay timeOfDayFor(int hour) {
+    if (hour >= 6 && hour < 12) return HabitTimeOfDay.morning;
+    if (hour >= 12 && hour < 18) return HabitTimeOfDay.afternoon;
+    return HabitTimeOfDay.evening;
+  }
+
+  /// Mô tả ngắn lịch của thói quen để hiện trên thẻ, ví dụ "T2, T4, T6 · 20:00 – 20:25", hoặc
+  /// "T2, T4, T6 · Tối" cho thói quen cũ chưa có giờ.
   static String describe(Habit habit) {
     final parts = [describeRepeat(habit)];
+    final range = timeRange(habit);
+    if (range != null) return [...parts, range].join(' · ');
     switch (habit.timeOfDay) {
       case HabitTimeOfDay.morning:
         parts.add('Sáng');

@@ -40,6 +40,7 @@ class Habit {
     this.reminderEnabled = false,
     this.reminderTime = defaultReminderTime,
     this.reminderInterrupt = false,
+    this.hasStartTime = false,
     this.sortOrder = 0,
     this.startDate,
     this.dueDate,
@@ -107,6 +108,10 @@ class Habit {
   /// 023). Habits saved before spec 023 read as off.
   final bool reminderInterrupt;
 
+  /// 4.1 Spec 024: the habit is scheduled at [reminderTime] like a calendar event, lasting
+  /// [minMinutesPerDay]. Habits saved before spec 024 have only a part of day ([timeOfDay]).
+  final bool hasStartTime;
+
   /// Thứ tự hiển thị; bằng nhau thì giữ thứ tự trong Hive.
   final int sortOrder;
 
@@ -153,6 +158,7 @@ class Habit {
     reminderEnabled: reminderEnabled,
     reminderTime: reminderTime,
     reminderInterrupt: reminderInterrupt,
+    hasStartTime: hasStartTime,
     sortOrder: sortOrder ?? this.sortOrder,
     startDate: startDate,
     dueDate: dueDate,
@@ -181,6 +187,7 @@ class Habit {
     'reminderEnabled': reminderEnabled,
     'reminderTime': reminderTime,
     'reminderInterrupt': reminderInterrupt,
+    'hasStartTime': hasStartTime,
     'sortOrder': sortOrder,
     'startDate': startDate == null ? null : dateKey(startDate!),
     'dueDate': dueDate == null ? null : dateKey(dueDate!),
@@ -210,6 +217,7 @@ class Habit {
     reminderEnabled: map['reminderEnabled'] as bool? ?? false,
     reminderTime: map['reminderTime'] as String? ?? defaultReminderTime,
     reminderInterrupt: map['reminderInterrupt'] as bool? ?? false,
+    hasStartTime: map['hasStartTime'] as bool? ?? false,
     sortOrder: map['sortOrder'] as int? ?? 0,
     startDate: _date(map['startDate']),
     dueDate: _date(map['dueDate']),

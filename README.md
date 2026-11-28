@@ -228,8 +228,9 @@ adb shell settings put secure show_ime_with_hard_keyboard 1
 11. **Đổi nơi học.** Ở **Hôm nay**, thẻ **Học tiếp** ghi "ở Quán San Hô" → **Đổi thói quen hoặc
    thời lượng** → **Học ở**: chọn **Biển của Gret** → **Dùng kế hoạch này**: phiên sau diễn ra trong
    biển như cũ. Các bạn biển là nhân vật của Gret, không phải người thật (ADR-0011).
-12. **Nhắc giờ học.** Tab **Thói quen** → mở thói quen → **Sửa** → bật **Nhắc nhở**, chọn giờ
-   khoảng 2 phút sau → **Lưu**. Lần đầu có lời nhắc, Android hỏi quyền thông báo → **Cho phép**.
+12. **Nhắc giờ học.** Tab **Thói quen** → mở thói quen → **Sửa** → khối **Lịch** (spec 024, như
+   sự kiện trên Google Calendar: lặp lại, **Bắt đầu lúc**, kéo dài, **Nhắc khi tới giờ**) → đặt
+   giờ bắt đầu khoảng 2 phút sau → **Lưu**. Lần đầu có lời nhắc, Android hỏi quyền thông báo → **Cho phép**.
    Đúng giờ (có thể trễ vài phút) Gret báo "Gret đang đợi bạn 🐟 – Tới giờ … rồi"; chạm vào để mở
    DisGret. Đã làm xong thói quen hôm nay thì hôm nay không nhắc nữa (ADR-0006).
    Bật thêm **Chặn app gây xao nhãng khi tới giờ** (spec 023): đúng giờ mà đang mở YouTube thì Gret

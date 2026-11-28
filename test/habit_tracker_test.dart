@@ -88,7 +88,9 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('Hằng tuần theo thứ, buổi tối, màu, nhắc nhở, kết thúc sau N ngày', (tester) async {
+    testWidgets('Lịch: hằng tuần theo thứ, giờ bắt đầu, màu, nhắc nhở, kết thúc sau N ngày', (
+      tester,
+    ) async {
       await openForm(tester);
       await typeName(tester, 'Ví dụ: Ôn bài', 'Học');
 
@@ -98,7 +100,11 @@ void main() {
       for (final day in ['Thứ Hai', 'Thứ Tư', 'Thứ Sáu']) {
         await _tap(tester, find.bySemanticsLabel(day));
       }
-      await _tap(tester, find.text('Tối'));
+      // Spec 024: the schedule reads like a calendar event and follows every choice.
+      expect(
+        tester.widget<Text>(find.byKey(const ValueKey('schedule-summary'))).data,
+        'T2, T4, T6 · 07:00 – 07:25',
+      );
 
       // Kết thúc sau N ngày: bật công tắc, chọn "Sau số ngày", nhập 66.
       await _tap(tester, find.byType(Switch).first);
@@ -108,7 +114,7 @@ void main() {
       await _tap(tester, find.text('Xong'));
       expect(find.text('Sau 66 ngày'), findsOneWidget);
 
-      await _tap(tester, find.byType(Switch).last);
+      // New habits are reminded at their start time by default.
       expect(find.text('07:00'), findsOneWidget);
       expect(find.text('Gret sẽ nhắc bạn vào giờ này, những ngày có lịch.'), findsOneWidget);
 
@@ -129,7 +135,9 @@ void main() {
       expect(habit.colorIndex, 7);
       expect(habit.repeat, HabitRepeat.weekly);
       expect(habit.weekdays, [DateTime.monday, DateTime.wednesday, DateTime.friday]);
-      expect(habit.timeOfDay, HabitTimeOfDay.evening);
+      expect(habit.hasStartTime, isTrue);
+      // The part of day follows the start time.
+      expect(habit.timeOfDay, HabitTimeOfDay.morning);
       expect(habit.endRule, HabitEndRule.afterDays);
       expect(habit.endAfterDays, 66);
       expect(habit.reminderEnabled, isTrue);

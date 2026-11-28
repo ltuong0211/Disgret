@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/achievements.dart';
 import '../data/date_utils.dart';
+import '../data/habit_schedule.dart';
 import '../data/habit_science.dart';
 import '../data/hive_boxes.dart';
 import '../data/mock_data.dart';
@@ -182,6 +183,7 @@ class HabitsNotifier extends Notifier<List<Habit>> {
     String place = '',
     String minimalVersion = '',
     String icon = Habit.defaultIcon,
+    String? startTime,
   }) => create(
     Habit(
       id: '',
@@ -192,6 +194,13 @@ class HabitsNotifier extends Notifier<List<Habit>> {
       place: place,
       minimalVersion: minimalVersion,
       icon: icon,
+      // 4.1 Spec 024: a start time ("HH:mm") schedules it like a calendar event, reminded then.
+      hasStartTime: startTime != null,
+      reminderEnabled: startTime != null,
+      reminderTime: startTime ?? Habit.defaultReminderTime,
+      timeOfDay: startTime == null
+          ? HabitTimeOfDay.anytime
+          : HabitSchedule.timeOfDayFor(int.parse(startTime.split(':').first)),
     ),
   );
 

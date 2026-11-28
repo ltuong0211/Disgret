@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../data/mascot_mood.dart';
+import '../data/models/habit.dart';
 import '../data/models/user_profile.dart';
 import '../data/models/reel_preferences.dart';
 import '../data/motivation_quiz.dart';
@@ -57,6 +58,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _goalReason = TextEditingController();
   final _habitName = TextEditingController();
   final _habitMinutes = TextEditingController(text: '${HabitFormFields.defaultMinutes}');
+
+  /// 4.1 Spec 024: the first habit gets a start time too.
+  TimeOfDay _habitTime = _parseTime(Habit.defaultReminderTime);
+
+  static TimeOfDay _parseTime(String text) {
+    final parts = text.split(':');
+    return TimeOfDay(hour: int.parse(parts.first), minute: int.parse(parts.last));
+  }
+
+  static String _formatTime(TimeOfDay time) =>
+      '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
 
   /// 5.1 Tên gọi (spec 007); replaying the introduction starts from the current name.
   final _name = TextEditingController();
@@ -159,6 +171,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             goalId: goal.id,
             name: _habitName.text.trim(),
             minMinutesPerDay: int.parse(_habitMinutes.text),
+            startTime: _formatTime(_habitTime),
           );
     }
     if (_pages.any((page) => page.kind == _PageKind.apps)) {
@@ -370,6 +383,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           GoalFormFields(titleController: _goalTitle, reasonController: _goalReason),
           const SizedBox(height: AppSpacing.md),
           HabitFormFields(nameController: _habitName, minutesController: _habitMinutes),
+          const SizedBox(height: AppSpacing.sm),
+          // 4.1 Spec 024: when to study, reminded at that time; repetition is edited later.
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(AppIcons.alarm),
+            title: const Text(AppStrings.firstHabitTime),
+            trailing: Text(_formatTime(_habitTime), style: theme.textTheme.titleMedium),
+            onTap: () async {
+              final picked = await showTimePicker(context: context, initialTime: _habitTime);
+              if (picked != null) setState(() => _habitTime = picked);
+            },
+          ),
         ],
       ),
     );

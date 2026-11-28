@@ -11,6 +11,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../data/date_utils.dart';
 import '../data/habit_icon_catalog.dart';
+import '../data/habit_schedule.dart';
 import '../data/models/goal.dart';
 import '../data/models/habit.dart';
 import '../l10n/app_strings.dart';
@@ -49,7 +50,6 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
   late int _daysPerWeek;
   late Set<int> _weekdays;
   late Set<int> _monthDays;
-  late HabitTimeOfDay _timeOfDay;
   late bool _endEnabled;
   late HabitEndRule _endRule;
   late DateTime _endDate;
@@ -85,14 +85,14 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
     if (_daysPerWeek == 7 && habit?.repeat != HabitRepeat.weekly) _daysPerWeek = 5;
     _weekdays = {...?habit?.weekdays};
     _monthDays = {...?habit?.monthDays};
-    _timeOfDay = habit?.timeOfDay ?? HabitTimeOfDay.anytime;
     _endEnabled = habit != null && habit.endRule != HabitEndRule.never;
     _endRule = habit?.endRule == HabitEndRule.afterDays
         ? HabitEndRule.afterDays
         : HabitEndRule.onDate;
     _endDate = habit?.endDate ?? addDays(today, 30);
     _endAfterDays = habit?.endAfterDays ?? Habit.defaultEndAfterDays;
-    _reminderEnabled = habit?.reminderEnabled ?? false;
+    // Spec 024: a new habit gets a reminder at its start time; old ones keep their choice.
+    _reminderEnabled = habit?.reminderEnabled ?? true;
     _reminderInterrupt = habit?.reminderInterrupt ?? true;
     _reminderTime = _parseTime(habit?.reminderTime ?? Habit.defaultReminderTime);
     _dueDate = habit?.dueDate ?? today;
@@ -105,10 +105,15 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
       text: habit == null || habit.cue.isEmpty ? '' : 'Sau khi ${habit.cue}',
     );
     _minimal = TextEditingController(text: habit?.minimalVersion);
+    // The schedule summary shows the end time, so it follows the minutes.
+    _minutes.addListener(_refreshSummary);
   }
+
+  void _refreshSummary() => setState(() {});
 
   @override
   void dispose() {
+    _minutes.removeListener(_refreshSummary);
     for (final controller in [_name, _minutes, _cue, _minimal]) {
       controller.dispose();
     }
@@ -184,13 +189,15 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
       monthDays: !_isOneTime && _repeat == HabitRepeat.monthly
           ? (_monthDays.toList()..sort())
           : const [],
-      timeOfDay: _timeOfDay,
+      // The part of day follows the start time (filters on Thói quen, spec 024).
+      timeOfDay: HabitSchedule.timeOfDayFor(_reminderTime.hour),
       endRule: !_isOneTime && _endEnabled ? _endRule : HabitEndRule.never,
       endDate: _endDate,
       endAfterDays: _endAfterDays,
       reminderEnabled: _reminderEnabled,
       reminderTime: _formatTime(_reminderTime),
       reminderInterrupt: _reminderInterrupt,
+      hasStartTime: true,
       sortOrder: existing?.sortOrder ?? 0,
       startDate: existing?.startDate,
       dueDate: _isOneTime ? _dueDate : null,
@@ -312,6 +319,8 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
                                   : null,
                             ),
                           ),
+                          // 4.1 Spec 024: scheduled like a calendar event.
+                          _scheduleCard(theme),
                           _Section(
                             title: 'Biểu tượng',
                             trailing: TextButton.icon(
@@ -331,88 +340,6 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
                             child: _ColorGrid(
                               selected: _colorIndex,
                               onSelected: (index) => setState(() => _colorIndex = index),
-                            ),
-                          ),
-                          if (_isOneTime)
-                            _Section(
-                              title: 'Khi nào',
-                              child: _ValueRow(
-                                icon: AppIcons.calendar,
-                                text: _formatDate(_dueDate),
-                                tooltip: 'Đổi ngày',
-                                onTap: () =>
-                                    _pickDate(initial: _dueDate, onPicked: (day) => _dueDate = day),
-                              ),
-                            )
-                          else
-                            _Section(title: 'Lặp lại', child: _repeatSection()),
-                          _Section(
-                            title: 'Làm vào',
-                            child: _PillRow<HabitTimeOfDay>(
-                              options: const {
-                                HabitTimeOfDay.morning: 'Sáng',
-                                HabitTimeOfDay.afternoon: 'Chiều',
-                                HabitTimeOfDay.evening: 'Tối',
-                              },
-                              selected: _timeOfDay,
-                              // Bấm lại buổi đang chọn thì bỏ chọn: làm lúc nào cũng được.
-                              onSelected: (value) => setState(
-                                () => _timeOfDay = value == _timeOfDay
-                                    ? HabitTimeOfDay.anytime
-                                    : value,
-                              ),
-                            ),
-                          ),
-                          if (!_isOneTime)
-                            _Section(
-                              title: 'Kết thúc vào',
-                              trailing: Switch(
-                                value: _endEnabled,
-                                onChanged: (value) => setState(() => _endEnabled = value),
-                              ),
-                              child: _endEnabled ? _endSection() : null,
-                            ),
-                          _Section(
-                            title: 'Nhắc nhở',
-                            trailing: Switch(
-                              value: _reminderEnabled,
-                              onChanged: (value) => setState(() => _reminderEnabled = value),
-                            ),
-                            child: _reminderEnabled
-                                ? Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      _ValueRow(
-                                        icon: AppIcons.alarm,
-                                        text: _formatTime(_reminderTime),
-                                        tooltip: 'Đổi giờ nhắc',
-                                        onTap: _pickReminderTime,
-                                      ),
-                                      const SizedBox(height: AppSpacing.xs),
-                                      Text(
-                                        'Gret sẽ nhắc bạn vào giờ này, những ngày có lịch.',
-                                        style: theme.textTheme.bodySmall,
-                                      ),
-                                      // 2.2 Spec 023: only Android can cover another app.
-                                      if (ref.read(nativeBridgeProvider).isSupported)
-                                        SwitchListTile(
-                                          contentPadding: EdgeInsets.zero,
-                                          title: const Text(AppStrings.reminderInterruptTitle),
-                                          subtitle: const Text(AppStrings.reminderInterruptHint),
-                                          value: _reminderInterrupt,
-                                          onChanged: (value) =>
-                                              setState(() => _reminderInterrupt = value),
-                                        ),
-                                    ],
-                                  )
-                                : null,
-                          ),
-                          _Section(
-                            title: 'Số phút tối thiểu mỗi lần',
-                            child: MinutesPicker(
-                              controller: _minutes,
-                              presets: HabitFormFields.minutePresets,
-                              maxMinutes: HabitFormFields.maxMinutes,
                             ),
                           ),
                           _Section(
@@ -456,6 +383,122 @@ class _HabitFormScreenState extends ConsumerState<HabitFormScreen> {
                 ),
               ],
             ),
+    );
+  }
+
+  /// 4.1 Spec 024: "Lịch" like a calendar event — a live summary ("T2, T4, T6 · 20:00 – 20:25"),
+  /// the day or repetition, the start time, how long, the end, and the reminder at that time.
+  Widget _scheduleCard(ThemeData theme) {
+    final minutes = int.tryParse(_minutes.text) ?? HabitFormFields.defaultMinutes;
+    final preview = Habit(
+      id: '',
+      goalId: '',
+      name: '',
+      minMinutesPerDay: minutes,
+      type: _type,
+      repeat: _isOneTime ? HabitRepeat.daily : _repeat,
+      daysPerWeek: _repeat == HabitRepeat.weekly && !_weeklyByWeekdays ? _daysPerWeek : 7,
+      weekdays: _repeat == HabitRepeat.weekly && _weeklyByWeekdays
+          ? (_weekdays.toList()..sort())
+          : const [],
+      monthDays: _repeat == HabitRepeat.monthly ? (_monthDays.toList()..sort()) : const [],
+      dueDate: _dueDate,
+      reminderTime: _formatTime(_reminderTime),
+      hasStartTime: true,
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.lg),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, AppSpacing.md, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(AppStrings.scheduleTitle, style: theme.textTheme.titleMedium),
+              const SizedBox(height: AppSpacing.xs),
+              Row(
+                children: [
+                  Icon(AppIcons.calendar, size: 20, color: theme.colorScheme.primary),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      HabitSchedule.describe(preview),
+                      key: const ValueKey('schedule-summary'),
+                      style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary),
+                    ),
+                  ),
+                ],
+              ),
+              if (_isOneTime)
+                _Section(
+                  title: 'Khi nào',
+                  child: _ValueRow(
+                    icon: AppIcons.calendar,
+                    text: _formatDate(_dueDate),
+                    tooltip: 'Đổi ngày',
+                    onTap: () => _pickDate(initial: _dueDate, onPicked: (day) => _dueDate = day),
+                  ),
+                )
+              else
+                _Section(title: 'Lặp lại', child: _repeatSection()),
+              _Section(
+                title: AppStrings.scheduleStart,
+                child: _ValueRow(
+                  icon: AppIcons.alarm,
+                  text: _formatTime(_reminderTime),
+                  tooltip: AppStrings.scheduleChangeTime,
+                  onTap: _pickReminderTime,
+                ),
+              ),
+              _Section(
+                title: AppStrings.scheduleLength,
+                child: MinutesPicker(
+                  controller: _minutes,
+                  presets: HabitFormFields.minutePresets,
+                  maxMinutes: HabitFormFields.maxMinutes,
+                ),
+              ),
+              if (!_isOneTime)
+                _Section(
+                  title: 'Kết thúc vào',
+                  trailing: Switch(
+                    value: _endEnabled,
+                    onChanged: (value) => setState(() => _endEnabled = value),
+                  ),
+                  child: _endEnabled ? _endSection() : null,
+                ),
+              _Section(
+                title: AppStrings.scheduleRemind,
+                trailing: Switch(
+                  value: _reminderEnabled,
+                  onChanged: (value) => setState(() => _reminderEnabled = value),
+                ),
+                child: _reminderEnabled
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Gret sẽ nhắc bạn vào giờ này, những ngày có lịch.',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                          // 2.2 Spec 023: only Android can cover another app.
+                          if (ref.read(nativeBridgeProvider).isSupported)
+                            SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text(AppStrings.reminderInterruptTitle),
+                              subtitle: const Text(AppStrings.reminderInterruptHint),
+                              value: _reminderInterrupt,
+                              onChanged: (value) => setState(() => _reminderInterrupt = value),
+                            ),
+                        ],
+                      )
+                    : null,
+              ),
+              const SizedBox(height: AppSpacing.md),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

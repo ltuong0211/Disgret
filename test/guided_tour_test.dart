@@ -155,6 +155,11 @@ void main() {
       await tester.enterText(find.widgetWithText(TextFormField, 'Tên thói quen'), 'Làm đề');
       await tapAndSettle(tester, find.text(AppStrings.enterApp));
       expect(ProfileRepository().isTourPending, isTrue);
+      // Spec 024: the first habit is scheduled at a start time and reminded then.
+      final habit = HabitRepository().getAll().single;
+      expect(habit.hasStartTime, isTrue);
+      expect(habit.reminderEnabled, isTrue);
+      expect(habit.reminderTime, Habit.defaultReminderTime);
     });
   });
 }
