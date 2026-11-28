@@ -20,6 +20,7 @@ import 'package:focus_app/services/native_bridge.dart';
 import 'package:focus_app/services/reminder_service.dart';
 import 'package:focus_app/theme/app_theme.dart';
 import 'package:focus_app/widgets/habit_card.dart';
+import 'package:focus_app/widgets/hold_to_start_button.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:material_ui/material_ui.dart';
@@ -138,6 +139,21 @@ Future<void> pumpHabitCard(
   size: size,
   clock: clock,
 );
+
+/// Holds Hôm nay's start bar for the full hold (spec 018), the way a student starts studying.
+/// With [settle] false it only pumps one frame after letting go.
+Future<void> holdToStart(WidgetTester tester, {bool settle = true}) async {
+  final gesture = await tester.startGesture(tester.getCenter(find.byType(HoldToStartButton)));
+  // One frame starts the charge, then hold for the full time.
+  await tester.pump();
+  await tester.pump(AppMotion.holdToStart + const Duration(milliseconds: 50));
+  await gesture.up();
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+  }
+}
 
 /// Giả lập người dùng thoát khỏi app: đi đúng trình tự trạng thái như trên máy thật.
 void hideApp(WidgetTester tester) {

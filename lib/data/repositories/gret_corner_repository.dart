@@ -5,6 +5,7 @@ import 'package:hive/hive.dart';
 import '../gret_corner_catalog.dart';
 import '../hive_boxes.dart';
 import '../mascot_species.dart';
+import '../sea_cafe.dart';
 import '../sync_journal.dart';
 
 class GretCornerRepository {
@@ -12,6 +13,9 @@ class GretCornerRepository {
   static const String _wornKey = 'corner_worn';
   static const String _seaKey = 'corner_sea';
   static const String _mascotKey = 'corner_mascot';
+  static const String _styleKey = 'corner_mascot_style';
+  static const String _decorKey = 'corner_decor';
+  static const String _cafeLookKey = 'corner_cafe_look';
 
   Box<dynamic> get _box => Hive.box<dynamic>(HiveBoxes.profile);
 
@@ -44,7 +48,33 @@ class GretCornerRepository {
 
   Future<void> saveMascot(MascotSpecies species) => _put(_mascotKey, species.name);
 
-  /// 6.3 Writes and journals the change for the account sync (spec 016).
+  /// How every mascot is drawn (spec 020); unknown or missing reads as 3D mềm.
+  MascotStyle get style => MascotStyle.values.asNameMap()[_box.get(_styleKey)] ?? MascotStyle.soft;
+
+  Future<void> saveStyle(MascotStyle style) => _put(_styleKey, style.name);
+
+  /// Placed decoration id by spot (spec 021). Unknown spots and ids are ignored.
+  Map<DecorSpot, String> get decor {
+    final raw = (_box.get(_decorKey) as Map<dynamic, dynamic>?) ?? const {};
+    final spots = DecorSpot.values.asNameMap();
+    return {
+      for (final entry in raw.entries)
+        if (spots[entry.key] != null &&
+            GretCornerCatalog.decorationById('${entry.value}')?.spot == spots[entry.key])
+          spots[entry.key]!: entry.value as String,
+    };
+  }
+
+  /// How Quán San Hô is drawn (spec 021); unknown or missing reads as the cosy room.
+  CafeLook get cafeLook => CafeLook.values.asNameMap()[_box.get(_cafeLookKey)] ?? CafeLook.cosy;
+
+  Future<void> saveCafeLook(CafeLook look) => _put(_cafeLookKey, look.name);
+
+  Future<void> saveDecor(Map<DecorSpot, String> decor) =>
+      _put(_decorKey, {for (final entry in decor.entries) entry.key.name: entry.value});
+
+  /// 6.3 Writes and journals the change for the account sync (spec 016). The journal ignores
+  /// keys that are not on ADR-0013's allow-list.
   Future<void> _put(String key, Object value) async {
     await _box.put(key, value);
     await SyncJournal.shared.touch(HiveBoxes.profile, key);

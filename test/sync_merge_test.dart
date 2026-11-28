@@ -25,6 +25,8 @@ void main() {
       expect(SyncScope.isSynced(HiveBoxes.profile, 'user'), isTrue);
       expect(SyncScope.isSynced(HiveBoxes.profile, 'onboarding_done'), isTrue);
       expect(SyncScope.isSynced(HiveBoxes.profile, 'corner_worn'), isTrue);
+      expect(SyncScope.isSynced(HiveBoxes.profile, 'corner_decor'), isTrue);
+      expect(SyncScope.isSynced(HiveBoxes.profile, 'corner_cafe_look'), isTrue);
       expect(SyncScope.isSynced(HiveBoxes.events, 'e1'), isFalse);
       expect(SyncScope.isSynced(HiveBoxes.profile, 'blocked_packages'), isFalse);
       expect(SyncScope.isSynced(HiveBoxes.profile, 'reminder_permission_asked'), isFalse);

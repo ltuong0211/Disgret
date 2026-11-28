@@ -5,17 +5,21 @@ import 'package:flutter/foundation.dart'; // Để dùng kIsWeb
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'data/mascot_mood.dart';
 import 'data/models/reel.dart';
 import 'providers/account_providers.dart';
 import 'providers/app_providers.dart';
 import 'data/reminder_plan.dart';
 import 'providers/focus_session_provider.dart';
+import 'providers/gret_corner_providers.dart';
+import 'providers/gret_emote_provider.dart';
 import 'providers/reminder_providers.dart';
 import 'router/app_router.dart';
 import 'services/native_bridge.dart';
 import 'theme/app_theme.dart';
 import 'widgets/focus_feedback.dart';
 import 'widgets/launch_overlay.dart';
+import 'widgets/mascot/mascot_style_scope.dart';
 
 class DisGretApp extends ConsumerStatefulWidget {
   const DisGretApp({super.key});
@@ -88,6 +92,8 @@ class _DisGretAppState extends ConsumerState<DisGretApp> {
         notifier.onInterventionShown();
       case NativeAction.resumeFocus:
         if (phase == FocusPhase.running) router.go(AppRoutes.focus);
+        // Back to studying from the intervention: Gret is proud (spec 020).
+        ref.read(gretEmoteProvider.notifier).show(MascotMood.proud);
       case NativeAction.openReelsDistracted:
         // Motivation after a distraction; the router sends it to /today if no session runs.
         if (phase != FocusPhase.finished) {
@@ -161,8 +167,12 @@ class _DisGretAppState extends ConsumerState<DisGretApp> {
       locale: const Locale('vi'),
       supportedLocales: const [Locale('vi')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      // 5.3 Gret swims across once when DisGret opens, above every screen (spec 011).
-      builder: (context, child) => LaunchOverlay(child: child ?? const SizedBox.shrink()),
+      // 5.3 Gret swims across once when DisGret opens, above every screen (spec 011), drawn in the
+      // style chosen in Góc của Gret like every mascot (spec 020).
+      builder: (context, child) => MascotStyleScope(
+        style: ref.watch(gretCornerProvider.select((corner) => corner.style)),
+        child: LaunchOverlay(child: child ?? const SizedBox.shrink()),
+      ),
     );
   }
 }

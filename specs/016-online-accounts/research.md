@@ -79,7 +79,7 @@ technical decisions behind `plan.md`.
 | Box | Keys | Synced |
 |---|---|---|
 | `goals`, `habits`, `habit_logs`, `sessions` | every record | yes |
-| `profile` | `user` (only `motivationTypes`, `preferredReelLength`, `quizAnswers`), `onboarding_done`, `celebrated_level`, `study_place`, `corner_owned`, `corner_worn`, `corner_sea`, `corner_mascot` | yes |
+| `profile` | `user` (only `motivationTypes`, `preferredReelLength`, `quizAnswers`), `onboarding_done`, `celebrated_level`, `study_place`, `corner_owned`, `corner_worn`, `corner_sea`, `corner_mascot`, `corner_mascot_style`, `corner_decor`, `corner_cafe_look` | yes |
 | `profile` → `user` | `displayName`, `demoMode`, any later field | no (phone-only; display name per ADR-0012) |
 | `profile` | `blocked_packages`, `reminder_permission_asked` | no (phone-bound) |
 | `events` | all | no (phone-only; cleared on sign-out) |

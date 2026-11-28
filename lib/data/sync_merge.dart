@@ -26,6 +26,10 @@ class SyncScope {
     'corner_worn',
     'corner_sea',
     'corner_mascot',
+    // Góc của Gret choices added by specs 020 and 021 (ADR-0013 allow-list, 2026-11-28).
+    'corner_mascot_style',
+    'corner_decor',
+    'corner_cafe_look',
   };
 
   /// The profile key that holds the `UserProfile` map.

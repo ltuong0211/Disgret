@@ -66,7 +66,9 @@ pricing change effective 2026-09-01.
    stays on the phone:
    - every record of the `goals`, `habits`, `habit_logs` and `sessions` boxes;
    - profile box keys `onboarding_done`, `celebrated_level`, `study_place`, `corner_owned`,
-     `corner_worn`, `corner_sea`, `corner_mascot`;
+     `corner_worn`, `corner_sea`, `corner_mascot`, and (added 2026-11-28 with the team's specs
+     020/021) `corner_mascot_style`, `corner_decor`, `corner_cafe_look` — Góc của Gret choices,
+     already covered by the privacy notice;
    - inside the profile `user` map only `motivationTypes`, `preferredReelLength` and
      `quizAnswers` (spec 015 quiz answers: question id → answer ids, no free text).
 
